@@ -82,6 +82,13 @@ print("Cross-validation linear SVM training set: %.2f" % np.mean(results_linear_
 y_pred_linear_SVM = classifier_linear_svm.predict(X_test)
 accuracy_score(y_test, y_pred_linear_SVM, normalize=True)
 
+"""
+Final scores:
+    10-fold cross-validation accuracy on training set: 56%
+    test-set accuracy: 60.4%
+    
+"""
+
 ##################Logistic Classifier######
 from sklearn.linear_model import LogisticRegression
 classifier_log_regression = LogisticRegression(penalty='l2', C=0.05)
@@ -93,6 +100,13 @@ print("Cross-validation logistic Regression training set: %.2f" % np.mean(result
 
 y_pred_log_regression = classifier_log_regression.predict(X_test)
 accuracy_score(y_test, y_pred_log_regression, normalize=True)
+
+"""
+Final scores:
+    10-fold cross-validation accuracy on training set: 51%
+    test-set accuracy: 57.3%
+    
+"""
 
 ##################Kernel SVM##########
 
@@ -107,6 +121,13 @@ print("Cross-validation kernel SVM training set: %.2f" % np.mean(results_kernel_
 y_pred_kernel_SVM = classifier_kernel_svm.predict(X_test)
 accuracy_score(y_test, y_pred_kernel_SVM, normalize=True)
 
+"""
+Final scores:
+    10-fold cross-validation accuracy on training set: 56%
+    test-set accuracy: 62.5%
+    
+"""
+
 ############KNN###############
 from sklearn.neighbors import KNeighborsClassifier
 classifier_KNN = KNeighborsClassifier(n_neighbors = 5)
@@ -118,6 +139,13 @@ print("Cross-validation KNN training set: %.2f" % np.mean(results_KNN))
 
 y_pred_KNN = classifier_KNN.predict(X_test)
 accuracy_score(y_test, y_pred_KNN, normalize=True)
+
+"""
+Final scores:
+    10-fold cross-validation accuracy on training set: 49%
+    test-set accuracy: 51%%
+    
+"""
 
 ############Naive Bayes###############
 from sklearn.naive_bayes import GaussianNB
@@ -131,6 +159,13 @@ print("Cross-validation Naive Bayes training set: %.2f" % np.mean(results_naiveb
 y_pred_naivebayes = classifier_naivebayes.predict(X_test)
 accuracy_score(y_test, y_pred_naivebayes, normalize=True)
 
+"""
+Final scores:
+    10-fold cross-validation accuracy on training set: 50%
+    test-set accuracy: 57.3%
+    
+"""
+
 ############Random Forests###############
 from sklearn.ensemble import RandomForestClassifier
 classifier_random_forests = RandomForestClassifier(n_estimators=1000, criterion='entropy', n_jobs=-1)
@@ -143,3 +178,9 @@ print("Cross-validation random forests training set: %.2f" % np.mean(results_ran
 y_pred_random_forests = classifier_random_forests.predict(X_test)
 accuracy_score(y_test, y_pred_random_forests, normalize=True)
 
+"""
+Final scores:
+    10-fold cross-validation accuracy on training set: 54%
+    test-set accuracy: 65.6%
+    
+"""
