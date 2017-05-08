@@ -13,6 +13,13 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class CallReceiverStub {
 	
 	
+	/**
+	 * 
+	 * Channel of the caller agent, the file posted should be a wave file
+	 * the agent id should be included.
+	 * 
+	 */
+	
 	@PostMapping("/post_wave_agent")
     public String AgentChannelProcessing(@RequestParam("file") MultipartFile file, @RequestParam("AgentID") String agentid) {
 
@@ -41,10 +48,19 @@ public class CallReceiverStub {
 	
 
 	
+	/**
+	 * 
+	 * 
+	 * 
+	 * @param callid
+	 * @param list_of_annotations
+	 * @param timestamp
+	 */
+	
 	private void record_annotations(String callid, LinkedList<String> list_of_annotations, long timestamp) {
 		// TODO Auto-generated method stub
 		
-		//call the service in which the annotation should be registered.
+		//call the service(s) in which the annotation should be registered.
 		
 		
 	}
