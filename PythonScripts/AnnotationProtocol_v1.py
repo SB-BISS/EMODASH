@@ -71,7 +71,16 @@ def playFile(filepath):
     stream.close()  
     p.terminate() 
 
-playFile('/Users/guysimons/Documents/EmoDash/GoogleSpeechAPI/first3sec.wav')
+"""
+1. open file
+2. configure stream
+3. play stream
+"""
+
+#############EVALUATION##############
+def evaluation_model(model, features, filename):
+    
+
     
     
 
