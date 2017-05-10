@@ -21,19 +21,23 @@ def splitting(filepath, window_storage_directory):
     duration = audiofile.duration_seconds
     window_index = np.arange(start=0,stop=duration*1000, step = 3000)
     cntr = 0
-    filename = re.search('[a-zA-Z]+.wav$', filepath).group(0)
+    filename = re.search('[a-zA-Z0-9]+.wav$', filepath).group(0)
+    window_names = []
     
     for i in range(0, int(np.ceil(duration/3))):
         cntr = cntr+1
         if i == int(np.ceil(duration/3)-1.0):
             window = audiofile[window_index[i]:]
             filepath = '/Users/guysimons/Documents/EmoDash/windowDirectory/' + filename + '_window_'+ str(cntr) +'.wav'
-            window.export(filepath, format = 'wav')         
+            window.export(filepath, format = 'wav')   
+            window_names.append(filename + '_window_'+ str(cntr) +'.wav')
             break
 
         window = audiofile[window_index[i]:window_index[i+1]]
         filepath = '/Users/guysimons/Documents/EmoDash/windowDirectory/' + filename + '_window_'+ str(cntr) +'.wav'
         window.export(filepath, format = 'wav')
+        window_names.append(filename + '_window_'+ str(cntr) +'.wav')
+    return window_names
         
 
 """
@@ -49,10 +53,10 @@ Note:
 """
 
 #############FEATURE-EXTRACTION##############
-def featureExtraction(window_storage_directory):
+def featureExtraction(filenames,window_storage_directory):
     features_complete = np.ndarray((0,34))
-    files = [file_name for file_name in os.listdir(window_storage_directory) if not file_name=='.DS_Store']
-    for file_name in files:
+    #files = [file_name for file_name in os.listdir(window_storage_directory) if not file_name=='.DS_Store']
+    for file_name in filenames:
         
             
         file_path = window_storage_directory + file_name
@@ -62,7 +66,7 @@ def featureExtraction(window_storage_directory):
         features = np.asarray(features).reshape(len(features),-1).transpose()
         features_complete = np.append(features_complete, features, axis=0)
     
-    return features_complete, files
+    return features_complete
 
 """
 1. open window/file from window storage directory
@@ -157,13 +161,15 @@ def evaluation_model(model, features, filenames, window_storage_directory):
 6. if the prediction is not correct, ask for correction & append
 """
 #############EXECUTION: SPLITTING FILE & RECOMPILE MODEL##############
-filepath = '/Users/guysimons/Documents/EmoDash/GoogleSpeechAPI/testSentence.wav'
+filepath = '/Users/guysimons/Documents/EmoDash/Dataset/AudioData/KL/a10.wav'
 window_storage_directory = '/Users/guysimons/Documents/EmoDash/windowDirectory/'
 
-splitting(filepath, window_storage_directory)
+filenames = splitting(filepath, window_storage_directory)
 classifier = construct_model('/Users/guysimons/Documents/EmoDash/EmoDashRepo/EMODASH/PythonScripts/models/EmoDashANN_model_v1.json',
                              '/Users/guysimons/Documents/EmoDash/EmoDashRepo/EMODASH/PythonScripts/models/EmoDashANN_weights_v1.h5')
 
 #############EXECUTION: SAVE FEATURES AND (CORRECTED) TARGET EMOTIONS##############
-features, filenames = featureExtraction(window_storage_directory)
+features = featureExtraction(filenames,window_storage_directory)
 targets, y_pred = evaluation_model(classifier,features,filenames,window_storage_directory)
+
+y_pred = classifier.predict(features)
