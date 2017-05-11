@@ -11,6 +11,9 @@ import org.springframework.web.multipart.MultipartFile;
  * 
  * The emotion annotator hides the complexity of 
  * dealing with Machine learning Web Services
+ * 
+ * Maybe we do not need this one as we can create a Python flask annotation service
+ * 
  * @author Stefano
  *
  */
