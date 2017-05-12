@@ -23,6 +23,7 @@ from pyAudioAnalysis import audioFeatureExtraction
 import os
 import re
 import matplotlib.pyplot as plt
+from sklearn.externals import joblib
 
 seed = 7
 np.random.seed(seed)
@@ -35,7 +36,7 @@ labels_complete = np.empty((0,))
 dirs = ['DC', 'JE', 'JK', 'KL']
 for speaker in dirs:
 
-    files = [file_name for file_name in os.listdir('/Users/guysimons/Documents/EmoDash/Dataset/AudioData/' + speaker)]
+    files = [file_name for file_name in os.listdir('/Users/guysimons/Documents/EmoDash/Dataset/AudioData/' + speaker) if not file_name=='.DS_Store']
     for file_name in files:
         file_path = '/Users/guysimons/Documents/EmoDash/Dataset/AudioData/' + speaker + '/' + file_name
         [Fs, x] = audioBasicIO.readAudioFile(file_path)
@@ -72,7 +73,11 @@ Sc_X = StandardScaler(with_mean = True, with_std=True)
 X_train=Sc_X.fit_transform(X_train)
 X_test=Sc_X.transform(X_test)
 
+joblib.dump(Sc_X, 'featuresScaled.pkl')
+
 dummy_y_train = np_utils.to_categorical(y_train)
+
+
 
 ################MODEL BUILDING############################
 

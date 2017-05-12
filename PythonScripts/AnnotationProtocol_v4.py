@@ -16,6 +16,7 @@ import wave
 import re
 import pickle
 from sklearn.externals import joblib
+import pandas as pd
 
 #############SPLITTING FILE INTO 3 SECOND WINDOWS##############
 def splittingSingleFile(filepath, window_storage_directory):
@@ -178,18 +179,26 @@ def evaluation_model(model, features, filenames, window_storage_directory):
 6. if the prediction is not correct, ask for correction & append
 """
 
-def Main(window_storage_directory, log_file, model):
-    with open('/Users/guysimons/Documents/EmoDash/EmoDashLog.txt') as f:
+#Fix the fact that the feature csv will be overwritten if next session is done
+def Main(window_storage_directory, log_file_path, model):
+    with open(log_file_path as f:
         completed_files = f.readlines()
         completed_files = [x.strip() for x in completed_files]
-    features_complete = np.ndarray((0,34))
-    target_complete = np.ndarray((0,1))
+        f.close()
+    features_complete = pd.DataFrame(np.ndarray((0,34)))
+    target_complete = pd.DataFrame(np.ndarray((0,1)))
     filenames = [file_name for file_name in os.listdir(window_storage_directory) if not file_name in completed_files]
     for filename in filenames:
         features = featureExtraction(filename, window_storage_directory)
         target, y_pred = evaluation_model(model, features, filename, window_storage_directory)
         features_complete.append(features_complete, features, axis=0)
         target_complete = np.append(target_complete, target, axis=0)
+        features_complete.to_csv('/Users/guysimons/Documents/EmoDash/featuresComplete.csv')
+        target_complete.to_csv('/Users/guysimons/Documents/EmoDash/targetComplete.csv')
+        
+        with open(logfile_path, "a") as f:
+        f.write(filename)
+        f.close()
         
         
 
@@ -201,8 +210,6 @@ filenames = splitAllFiles(raw_files_directory, window_storage_directory)
 classifier = construct_model('/Users/guysimons/Documents/EmoDash/EmoDashRepo/EMODASH/PythonScripts/models/EmoDashANN_model_v1.json',
                              '/Users/guysimons/Documents/EmoDash/EmoDashRepo/EMODASH/PythonScripts/models/EmoDashANN_weights_v1.h5')
 
-test_list = [0,2,3]
-joblib.dump(test_list, "testDump.pkl")
 
 #############EXECUTION: SAVE FEATURES AND (CORRECTED) TARGET EMOTIONS##############
 features = featureExtraction(filenames,window_storage_directory)
