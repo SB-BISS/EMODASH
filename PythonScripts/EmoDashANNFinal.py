@@ -73,7 +73,7 @@ Sc_X = StandardScaler(with_mean = True, with_std=True)
 X_train=Sc_X.fit_transform(X_train)
 X_test=Sc_X.transform(X_test)
 
-joblib.dump(Sc_X, 'featuresScaled.pkl')
+#joblib.dump(Sc_X, 'featuresScaled.pkl')
 
 dummy_y_train = np_utils.to_categorical(y_train)
 

@@ -14,9 +14,8 @@ import os
 import pyaudio  
 import wave  
 import re
-import pickle
-from sklearn.externals import joblib
 import pandas as pd
+from sklearn.externals import joblib
 
 #############SPLITTING FILE INTO 3 SECOND WINDOWS##############
 def splittingSingleFile(filepath, window_storage_directory):
@@ -60,16 +59,19 @@ Note:
 
 #############FEATURE-EXTRACTION##############
 def featureExtraction(filename,window_storage_directory):
-    features_complete = np.ndarray((0,34))
-    #files = [file_name for file_name in os.listdir(window_storage_directory) if not file_name=='.DS_Store']
-    file_path = window_storage_directory + file_name
+    
+    
+    file_path = window_storage_directory + filename
     [Fs, x] = audioBasicIO.readAudioFile(file_path)
     features = audioFeatureExtraction.stFeatureExtraction(x, Fs, 0.05*Fs, 0.025*Fs)
-    features = np.mean(features, axis=1)
-    features = np.asarray(features).reshape(len(features),-1).transpose()
-    features_complete = np.append(features_complete, features, axis=0)
+    if (len(features)==0 or features.shape[1]<50):
+        features = 'none'
+    else:
+        features = np.mean(features, axis=1)
+        features = np.asarray(features).reshape(len(features),-1).transpose()
     
-    return features_complete
+    
+    return features
 
 """
 1. open window/file from window storage directory
@@ -124,51 +126,44 @@ def construct_model(filepath_model, filepath_weights):
 """
 
 #############EVALUATION##############
-def evaluation_model(model, features, filenames, window_storage_directory):
+def evaluation_model(model, features, filename, window_storage_directory):
     features_ns = np.asarray(features).reshape(len(features),-1)
     labels = {0:'angry', 1:'disgust', 2:'fear',3:'happiness', 4:'neutral', 5:'sadness', 6:'surprise'}
-    targetLabels = []
-    y_predComplete = np.ndarray((0,7))
     featureScaler = joblib.load('/Users/guysimons/Documents/EmoDash/EmoDashRepo/EMODASH/PythonScripts/featuresScaled.pkl')
     features = featureScaler.transform(features_ns)
     
+    y_pred = model.predict(np.asarray(features).reshape(1,34))
+    result = np.argmax(y_pred)
     
-    for i in range(0, features_ns.shape[0]):
-        rep = True
-        y_pred = model.predict(np.asarray(features[i,]).reshape(1,34))
-        y_predComplete = np.append(y_predComplete, y_pred, axis=0)
-        result = np.argmax(y_pred)
+    for key in labels:
+        if result == key:
+            emotion = labels[key]
+    rep = True
+    while rep == True:
+        playFile(window_storage_directory + filename)
         
-        for key in labels:
-            if result == key:
-                emotion = labels[key]
+    
+        print("\n" + "Predicted emotion: "+ emotion)
+        feedback = raw_input("Is this prediction correct for file " + filename + "? [y/n/repeat/quit]: \n")
         
-        while rep == True:
-            playFile(window_storage_directory + filenames[i])
-            
-        
-            print("\n" + "Predicted emotion: "+ emotion)
-            feedback = raw_input("Is this prediction correct for file " + filenames[i]+ "? [y/n/repeat/quit]: \n")
-            
-            if feedback == 'y':
-                targetLabels.append(result)
-                rep = False
-            elif feedback == 'n':
-                correction = raw_input("What is the actual emotion? [0:'angry', 1:'disgust', 2:'fear',3:'happiness', 4:'neutral', 5:'sadness', 6:'surprise'] : \n")
-                targetLabels.append(correction)
-                rep = False
-            elif feedback == 'repeat':
-                rep = True
-            elif feedback == 'quit':
-                rep = False
-                
-            else:
-                print("Something went wrong, please follow the instructions")
-        
-        if feedback == 'quit':
+        if feedback == 'y':
+            targetLabel = result
+            rep = False
+        elif feedback == 'n':
+            correction = raw_input("What is the actual emotion? [0:'angry', 1:'disgust', 2:'fear',3:'happiness', 4:'neutral', 5:'sadness', 6:'surprise'] : \n")
+            targetLabel = correction
+            rep = False
+        elif feedback == 'repeat':
+            rep = True
+        elif feedback == 'quit':
+            targetLabel = 'quit'
             break
+            
+        else:
+            print("Something went wrong, please follow the instructions")
     
-    return targetLabels, y_predComplete
+    
+    return targetLabel
 
 """
 1. make sure that the shape of the input vector is correct
@@ -179,40 +174,57 @@ def evaluation_model(model, features, filenames, window_storage_directory):
 6. if the prediction is not correct, ask for correction & append
 """
 
-#Fix the fact that the feature csv will be overwritten if next session is done
+def saveOutput(features, targets, features_path, targets_path):
+    features_df = pd.DataFrame(features) 
+    
+    targets_df = pd.DataFrame(targets)
+    
+    targets_df.to_csv(targets_path)
+    
+    features_df.to_csv(features_path)
+    
+
 def Main(window_storage_directory, log_file_path, model):
-    with open(log_file_path as f:
+    with open(log_file_path) as f:
         completed_files = f.readlines()
         completed_files = [x.strip() for x in completed_files]
         f.close()
-    features_complete = pd.DataFrame(np.ndarray((0,34)))
-    target_complete = pd.DataFrame(np.ndarray((0,1)))
+    features_complete = np.ndarray((0,34))
+    target_complete = np.ndarray((0,1))
     filenames = [file_name for file_name in os.listdir(window_storage_directory) if not file_name in completed_files]
     for filename in filenames:
         features = featureExtraction(filename, window_storage_directory)
-        target, y_pred = evaluation_model(model, features, filename, window_storage_directory)
-        features_complete.append(features_complete, features, axis=0)
+        if features == 'none':
+            continue
+        target = np.asarray(evaluation_model(model, features, filename, window_storage_directory)).reshape((1,1))
+        if target == 'quit':
+            break
+        target[0,] = int(target[0,])
+        features_complete = np.append(features_complete, features, axis=0)
         target_complete = np.append(target_complete, target, axis=0)
-        features_complete.to_csv('/Users/guysimons/Documents/EmoDash/featuresComplete.csv')
-        target_complete.to_csv('/Users/guysimons/Documents/EmoDash/targetComplete.csv')
         
-        with open(logfile_path, "a") as f:
-        f.write(filename)
-        f.close()
+        with open(log_file_path, "a") as f:
+            f.write(filename + '\n')
+            f.close()
+        
+    return features_complete, target_complete
         
         
 
 #############EXECUTION: SPLITTING FILE & RECOMPILE MODEL##############
-raw_files_directory = '/Users/guysimons/Documents/EmoDash/GoogleSpeechAPI/testSentence.wav'
+raw_files_directory = '/Users/guysimons/Documents/EmoDash/test2'
 window_storage_directory = '/Users/guysimons/Documents/EmoDash/windowDirectory/'
+log_file_path = '/Users/guysimons/Documents/EmoDash/EmoDashLog.txt'
+features_csv = '/Users/guysimons/Documents/EmoDash/featuresComplete.csv'
+targets_csv = '/Users/guysimons/Documents/EmoDash/targetComplete.csv'
 
-filenames = splitAllFiles(raw_files_directory, window_storage_directory)
-classifier = construct_model('/Users/guysimons/Documents/EmoDash/EmoDashRepo/EMODASH/PythonScripts/models/EmoDashANN_model_v1.json',
+model = construct_model('/Users/guysimons/Documents/EmoDash/EmoDashRepo/EMODASH/PythonScripts/models/EmoDashANN_model_v1.json',
                              '/Users/guysimons/Documents/EmoDash/EmoDashRepo/EMODASH/PythonScripts/models/EmoDashANN_weights_v1.h5')
 
 
-#############EXECUTION: SAVE FEATURES AND (CORRECTED) TARGET EMOTIONS##############
-features = featureExtraction(filenames,window_storage_directory)
-target, y_pred = evaluation_model(classifier, features, filenames, window_storage_directory)
+splitAllFiles(raw_files_directory, window_storage_directory)
+features_complete, targets_complete = Main(window_storage_directory, log_file_path, model)
 
-y_pred = classifier.predict(features)
+
+#############SAVING OUTPUT TO CSV##############
+saveOutput(features_complete, targets_complete, features_csv, targets_csv)
