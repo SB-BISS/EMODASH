@@ -24,7 +24,7 @@ def splittingSingleFile(filepath, window_storage_directory):
     window_index = np.arange(start=0,stop=duration*1000, step = 3000)
     cntr = 0
     filename = re.search('[a-zA-Z0-9]+.wav$', filepath).group(0)
-    window_names = []
+    #window_names = []
     
     for i in range(0, int(np.ceil(duration/3))):
         cntr = cntr+1
@@ -32,17 +32,17 @@ def splittingSingleFile(filepath, window_storage_directory):
             window = audiofile[window_index[i]:]
             filepath = '/Users/guysimons/Documents/EmoDash/windowDirectory/' + filename + '_window_'+ str(cntr) +'.wav'
             window.export(filepath, format = 'wav')   
-            window_names.append(filename + '_window_'+ str(cntr) +'.wav')
+            #window_names.append(filename + '_window_'+ str(cntr) +'.wav')
             break
 
         window = audiofile[window_index[i]:window_index[i+1]]
         filepath = '/Users/guysimons/Documents/EmoDash/windowDirectory/' + filename + '_window_'+ str(cntr) +'.wav'
         window.export(filepath, format = 'wav')
-        window_names.append(filename + '_window_'+ str(cntr) +'.wav')
-    return window_names
+        #window_names.append(filename + '_window_'+ str(cntr) +'.wav')
+    #return window_names
         
 def splitAllFiles(raw_files_directory, window_storage_directory):
-    filenames = [name for name in os.listdir(raw_files_directory)]
+    filenames = [name for name in os.listdir(raw_files_directory) if not name == '.DS_Store']
     for filename in filenames:
         splittingSingleFile(raw_files_directory + "/" + filename, window_storage_directory)
 """
@@ -59,7 +59,6 @@ Note:
 
 #############FEATURE-EXTRACTION##############
 def featureExtraction(filename,window_storage_directory):
-    
     
     file_path = window_storage_directory + filename
     [Fs, x] = audioBasicIO.readAudioFile(file_path)
@@ -126,10 +125,10 @@ def construct_model(filepath_model, filepath_weights):
 """
 
 #############EVALUATION##############
-def evaluation_model(model, features, filename, window_storage_directory):
+def evaluation_model(model, features, filename, window_storage_directory, standardScaler_model_path):
     features_ns = np.asarray(features).reshape(len(features),-1)
     labels = {0:'angry', 1:'disgust', 2:'fear',3:'happiness', 4:'neutral', 5:'sadness', 6:'surprise'}
-    featureScaler = joblib.load('/Users/guysimons/Documents/EmoDash/EmoDashRepo/EMODASH/PythonScripts/featuresScaled.pkl')
+    featureScaler = joblib.load(standardScaler_model_path)
     features = featureScaler.transform(features_ns)
     
     y_pred = model.predict(np.asarray(features).reshape(1,34))
@@ -184,7 +183,7 @@ def saveOutput(features, targets, features_path, targets_path):
     features_df.to_csv(features_path)
     
 
-def Main(window_storage_directory, log_file_path, model):
+def Main(window_storage_directory, log_file_path, model,standardScaler_model_path):
     with open(log_file_path) as f:
         completed_files = f.readlines()
         completed_files = [x.strip() for x in completed_files]
@@ -196,10 +195,9 @@ def Main(window_storage_directory, log_file_path, model):
         features = featureExtraction(filename, window_storage_directory)
         if features == 'none':
             continue
-        target = np.asarray(evaluation_model(model, features, filename, window_storage_directory)).reshape((1,1))
+        target = np.asarray(evaluation_model(model, features, filename, window_storage_directory, standardScaler_model_path)).reshape((1,1))
         if target == 'quit':
             break
-        target[0,] = int(target[0,])
         features_complete = np.append(features_complete, features, axis=0)
         target_complete = np.append(target_complete, target, axis=0)
         
@@ -212,18 +210,19 @@ def Main(window_storage_directory, log_file_path, model):
         
 
 #############EXECUTION: SPLITTING FILE & RECOMPILE MODEL##############
-raw_files_directory = '/Users/guysimons/Documents/EmoDash/test2'
+raw_files_directory = '/Users/guysimons/Documents/EmoDash/test3'
 window_storage_directory = '/Users/guysimons/Documents/EmoDash/windowDirectory/'
 log_file_path = '/Users/guysimons/Documents/EmoDash/EmoDashLog.txt'
 features_csv = '/Users/guysimons/Documents/EmoDash/featuresComplete.csv'
 targets_csv = '/Users/guysimons/Documents/EmoDash/targetComplete.csv'
+standardScaler_model = '/Users/guysimons/Documents/EmoDash/EmoDashRepo/EMODASH/PythonScripts/featuresScaled.pkl'
 
 model = construct_model('/Users/guysimons/Documents/EmoDash/EmoDashRepo/EMODASH/PythonScripts/models/EmoDashANN_model_v1.json',
                              '/Users/guysimons/Documents/EmoDash/EmoDashRepo/EMODASH/PythonScripts/models/EmoDashANN_weights_v1.h5')
 
 
 splitAllFiles(raw_files_directory, window_storage_directory)
-features_complete, targets_complete = Main(window_storage_directory, log_file_path, model)
+features_complete, targets_complete = Main(window_storage_directory, log_file_path, model, standardScaler_model)
 
 
 #############SAVING OUTPUT TO CSV##############
