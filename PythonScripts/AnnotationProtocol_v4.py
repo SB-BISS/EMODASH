@@ -30,13 +30,13 @@ def splittingSingleFile(filepath, window_storage_directory):
         cntr = cntr+1
         if i == int(np.ceil(duration/3)-1.0):
             window = audiofile[window_index[i]:]
-            filepath = '/Users/guysimons/Documents/EmoDash/windowDirectory/' + filename + '_window_'+ str(cntr) +'.wav'
+            filepath = '/Users/guysimons/Documents/BISS/EmoDash/Development/Resources/windowDirectory/' + filename + '_window_'+ str(cntr) +'.wav'
             window.export(filepath, format = 'wav')   
             #window_names.append(filename + '_window_'+ str(cntr) +'.wav')
             break
 
         window = audiofile[window_index[i]:window_index[i+1]]
-        filepath = '/Users/guysimons/Documents/EmoDash/windowDirectory/' + filename + '_window_'+ str(cntr) +'.wav'
+        filepath = '/Users/guysimons/Documents/BISS/EmoDash/Development/Resources/windowDirectory/' + filename + '_window_'+ str(cntr) +'.wav'
         window.export(filepath, format = 'wav')
         #window_names.append(filename + '_window_'+ str(cntr) +'.wav')
     #return window_names
@@ -210,15 +210,15 @@ def Main(window_storage_directory, log_file_path, model,standardScaler_model_pat
         
 
 #############EXECUTION: SPLITTING FILE & RECOMPILE MODEL##############
-raw_files_directory = '/Users/guysimons/Documents/EmoDash/test3'
-window_storage_directory = '/Users/guysimons/Documents/EmoDash/windowDirectory/'
-log_file_path = '/Users/guysimons/Documents/EmoDash/EmoDashLog.txt'
-features_csv = '/Users/guysimons/Documents/EmoDash/featuresComplete.csv'
-targets_csv = '/Users/guysimons/Documents/EmoDash/targetComplete.csv'
-standardScaler_model = '/Users/guysimons/Documents/EmoDash/EmoDashRepo/EMODASH/PythonScripts/featuresScaled.pkl'
+raw_files_directory = '/Users/guysimons/Documents/BISS/EmoDash/Dataset/AudioData/DC/'
+window_storage_directory = '/Users/guysimons/Documents/BISS/EmoDash/Development/Resources/windowDirectory/'
+log_file_path = '/Users/guysimons/Documents/BISS/EmoDash/Development/Resources/EmoDashLog.txt'
+features_csv = '/Users/guysimons/Documents/BISS/EmoDash/Development/Resources/featuresComplete.csv'
+targets_csv = '/Users/guysimons/Documents/BISS/EmoDash/Development/Resources/targetComplete.csv'
+standardScaler_model = '/Users/guysimons/Documents/BISS/EmoDash/Development/Resources/featuresScaled.pkl'
 
-model = construct_model('/Users/guysimons/Documents/EmoDash/EmoDashRepo/EMODASH/PythonScripts/models/EmoDashANN_model_v1.json',
-                             '/Users/guysimons/Documents/EmoDash/EmoDashRepo/EMODASH/PythonScripts/models/EmoDashANN_weights_v1.h5')
+model = construct_model('/Users/guysimons/Documents/BISS/EmoDash/EmoDashRepo/EMODASH/PythonScripts/models/EmoDashANN_model_v1.json',
+                             '/Users/guysimons/Documents/BISS/EmoDash/EmoDashRepo/EMODASH/PythonScripts/models/EmoDashANN_weights_v1.h5')
 
 
 splitAllFiles(raw_files_directory, window_storage_directory)
@@ -227,3 +227,7 @@ features_complete, targets_complete = Main(window_storage_directory, log_file_pa
 
 #############SAVING OUTPUT TO CSV##############
 saveOutput(features_complete, targets_complete, features_csv, targets_csv)
+            
+    
+    
+    

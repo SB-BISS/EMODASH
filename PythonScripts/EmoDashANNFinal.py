@@ -36,9 +36,9 @@ labels_complete = np.empty((0,))
 dirs = ['DC', 'JE', 'JK', 'KL']
 for speaker in dirs:
 
-    files = [file_name for file_name in os.listdir('/Users/guysimons/Documents/EmoDash/Dataset/AudioData/' + speaker) if not file_name=='.DS_Store']
+    files = [file_name for file_name in os.listdir('/Users/guysimons/Documents/BISS/EmoDash/Dataset/AudioData/' + speaker) if not file_name=='.DS_Store']
     for file_name in files:
-        file_path = '/Users/guysimons/Documents/EmoDash/Dataset/AudioData/' + speaker + '/' + file_name
+        file_path = '/Users/guysimons/Documents/BISS/EmoDash/Dataset/AudioData/' + speaker + '/' + file_name
         [Fs, x] = audioBasicIO.readAudioFile(file_path)
         features = audioFeatureExtraction.stFeatureExtraction(x, Fs, 0.05*Fs, 0.025*Fs)
         features = np.mean(features, axis=1)
@@ -73,7 +73,7 @@ Sc_X = StandardScaler(with_mean = True, with_std=True)
 X_train=Sc_X.fit_transform(X_train)
 X_test=Sc_X.transform(X_test)
 
-#joblib.dump(Sc_X, 'featuresScaled.pkl')
+joblib.dump(Sc_X, 'featuresScaled.pkl')
 
 dummy_y_train = np_utils.to_categorical(y_train)
 
