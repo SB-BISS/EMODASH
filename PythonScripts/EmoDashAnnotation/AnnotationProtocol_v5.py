@@ -6,56 +6,15 @@ Created on Tue May  9 11:56:57 2017
 @author: guysimons
 """
 import numpy as np
-from pydub import AudioSegment
 from pyAudioAnalysis import audioBasicIO
 from pyAudioAnalysis import audioFeatureExtraction
 from keras.models import model_from_json
 import os
 import pyaudio  
 import wave  
-import re
 import pandas as pd
 from sklearn.externals import joblib
 
-#############SPLITTING FILE INTO 3 SECOND WINDOWS##############
-def splittingSingleFile(filepath, window_storage_directory):
-    audiofile = AudioSegment.from_wav(filepath)
-    duration = audiofile.duration_seconds
-    window_index = np.arange(start=0,stop=duration*1000, step = 3000)
-    cntr = 0
-    filename = re.search('[a-zA-Z0-9]+.wav$', filepath).group(0)
-    #window_names = []
-    
-    for i in range(0, int(np.ceil(duration/3))):
-        cntr = cntr+1
-        if i == int(np.ceil(duration/3)-1.0):
-            window = audiofile[window_index[i]:]
-            filepath = '/Users/guysimons/Documents/BISS/EmoDash/Development/Resources/windowDirectory/' + filename + '_window_'+ str(cntr) +'.wav'
-            window.export(filepath, format = 'wav')   
-            #window_names.append(filename + '_window_'+ str(cntr) +'.wav')
-            break
-
-        window = audiofile[window_index[i]:window_index[i+1]]
-        filepath = '/Users/guysimons/Documents/BISS/EmoDash/Development/Resources/windowDirectory/' + filename + '_window_'+ str(cntr) +'.wav'
-        window.export(filepath, format = 'wav')
-        #window_names.append(filename + '_window_'+ str(cntr) +'.wav')
-    #return window_names
-        
-def splitAllFiles(raw_files_directory, window_storage_directory):
-    filenames = [name for name in os.listdir(raw_files_directory) if not name == '.DS_Store']
-    for filename in filenames:
-        splittingSingleFile(raw_files_directory + "/" + filename, window_storage_directory)
-"""
-1. Open file
-2. Measure duration of file in seconds & generate sequence of milliseconds from 0 to the duration of the file
-    with a step size of 3 seconds (3000 milliseconds). This sequence will be used to split the audiofile in 3
-    second windows. 
-3. Split the audio file into 3-second segments by using the generated sequence
-3. Save each 3-second window as a wav file in the specified directory
-Note:
-    The if-statement makes sure that the last few seconds at the end of the file are saved into a window of <3 seconds
-    as well. 
-"""
 
 #############FEATURE-EXTRACTION##############
 def featureExtraction(filename,window_storage_directory):
@@ -209,19 +168,19 @@ def Main(window_storage_directory, log_file_path, model,standardScaler_model_pat
         
         
 
-#############EXECUTION: SPLITTING FILE & RECOMPILE MODEL##############
-raw_files_directory = '/Users/guysimons/Documents/BISS/EmoDash/Dataset/AudioData/DC/'
-window_storage_directory = '/Users/guysimons/Documents/BISS/EmoDash/Development/Resources/windowDirectory/'
-log_file_path = '/Users/guysimons/Documents/BISS/EmoDash/Development/Resources/EmoDashLog.txt'
-features_csv = '/Users/guysimons/Documents/BISS/EmoDash/Development/Resources/featuresComplete.csv'
-targets_csv = '/Users/guysimons/Documents/BISS/EmoDash/Development/Resources/targetComplete.csv'
-standardScaler_model = '/Users/guysimons/Documents/BISS/EmoDash/Development/Resources/featuresScaled.pkl'
+#############CONFIG VARIABLES##############
+window_storage_directory = str(raw_input("Please specify the directory containing the splitted files: \n"))
+log_file_path = str(raw_input("Please specify the location of the log file: \n"))
+features_csv = str(raw_input("Please specify the csv file to save the extracted features to: \n"))
+targets_csv = str(raw_input("Please specify the csv file to save the targets to: \n"))
+standardScaler_model = str(raw_input("Please specify the file containing the featuresScalar: \n"))
+model_architecture = str(raw_input("Please specify the json file containing the model: "))
+model_weights = str(raw_input("Please specify the file containing the model weights: "))
 
-model = construct_model('/Users/guysimons/Documents/BISS/EmoDash/EmoDashRepo/EMODASH/PythonScripts/models/EmoDashANN_model_v1.json',
-                             '/Users/guysimons/Documents/BISS/EmoDash/EmoDashRepo/EMODASH/PythonScripts/models/EmoDashANN_weights_v1.h5')
+model = construct_model(model_architecture, model_weights)
 
 
-splitAllFiles(raw_files_directory, window_storage_directory)
+#############EVALUATE MODEL##############
 features_complete, targets_complete = Main(window_storage_directory, log_file_path, model, standardScaler_model)
 
 
