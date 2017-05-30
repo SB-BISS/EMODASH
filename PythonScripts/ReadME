@@ -1,0 +1,23 @@
+To annotate audio files, first split the audio files into 3 second windows by executing the SplitFiles.py script. The program asks for the location of the audio files and the directory to store the splitted files in.
+
+Then, annotation can start by running the AnnotationProtocol_v6.py script.
+
+When running the annotation script, you'll first be prompted to specify the locations of some files and directories. More specifically, the script will ask for:
+
+1. location of the directory containing the splitted files
+2. location of the log file. This is a txt file that keeps track of which files have been annotated. Therefore, when you start a new annotation session you can continue where you left off last time without further configuration.
+3. location of csv file to store extracted & aggregated features.
+4. location of csv file to store targets. As you annotate, the emotion labels that you attribute to the audiofiles will be saved in this csv file.
+5. location of the StandardScaler.pkl. This file specifies how the extracted features should be standardized. This is necessary to make accurate predictions.
+6. location of the model. This is a .json file that specifies the architecture of the artificial neural network that is used to make predictions.
+7. location of the model weights. These are the weights that need to be added to the model architecture to be able to compile the model
+
+After configuration the annotation protocol performs 3 steps for each audio file:
+
+1. extract & aggregate features
+2. make a prediction about the emotion
+3. play the audio file
+4. let the user evaluate the prediction
+5. store prediction if it was correct, otherwise store the correction
+
+Note: during the evaluation (step 4) the protocol gives you the following options when asking whether the prediction is correct [y,n,repeat,quit]. If y (yes) is entered the prediction will be stored and the protocol proceeds to the next audiofile. If n (no) is entered the protocol asks for a correction. Here you can choose for: [0:'angry', 1:'disgust', 2:'fear',3:'happiness', 4:'neutral', 5:'sadness', 6:'surprise']. Make sure to enter the number, not the name of the emotion. If you want to listen to the audio file again you can type repeat. If you want to stop annotating type quit. This will automatically save all annotation work to the csv files and update the log file.
