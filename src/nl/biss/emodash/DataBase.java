@@ -10,24 +10,24 @@ import java.util.Properties;
 public class DataBase {
 
 	/**
-	 * This class creates the Emodash Dataset
+	 * This class creates the Emodash Database
 	 * @param args
 	 */
 	protected DataBase() {
 		    String name = "emodash";
-            String user = "visara";
-            String password = "Emodash.123";
+            String user = "EmoDashAdmin";
+            String password = "emodash123";
             
 			//createDB(name, user, password);
 			Connection con=connectDB(name, user, password);
 			System.err.println(con.toString());
 			
 			//Defining the DB Schema
-			String mysql= "CREATE TABLE `EMOTIONS` ( `StreamID` varchar(45) NOT NULL,  `EmotionType` varchar(45) NOT NULL,`Value` float NOT NULL, PRIMARY KEY (`StreamID`,`EmotionType`))";
-			String mysql1= "CREATE TABLE `Customer` (`CustomerID` varchar(45) NOT NULL,`Name` varchar(45) NOT NULL,`Surname` varchar(45) NOT NULL,`Age` varchar(45) DEFAULT NULL,`Sex` varchar(45) DEFAULT NULL,`Adress` varchar(45) DEFAULT NULL,`Reagion` varchar(45) DEFAULT NULL, PRIMARY KEY (`CustomerID`))";
+			String mysql= "CREATE TABLE `EMOTIONS` ( `StreamID` varchar(45) NOT NULL,`CallID` varchar(45) NOT NULL,  `EmotionType` varchar(45) NOT NULL,`Value` float NOT NULL, 'Timestamp' BIGINT NOT NULL, PRIMARY KEY (`StreamID`,`CallID`))";
+			String mysql1= "CREATE TABLE `Customer` (`CustomerID` varchar(45) NOT NULL,`Name` varchar(45) NOT NULL,`Surname` varchar(45) NOT NULL,`Age` varchar(45) DEFAULT NULL,`Sex` varchar(45) DEFAULT NULL,`Adress` varchar(45) DEFAULT NULL,`Region` varchar(45) DEFAULT NULL, PRIMARY KEY (`CustomerID`))";
 			String mysql2= "CREATE TABLE `Emotion_history` ( `CustomerID` varchar(45) NOT NULL, `CallID` varchar(45) NOT NULL,`Emotion_anger` varchar(45) NOT NULL,`Emotion_disgust` varchar(45) NOT NULL,`Emotion_fear` varchar(45) NOT NULL,`Emotion_happiness` varchar(45) NOT NULL,`Emotion_neutral` varchar(45) NOT NULL,`Emotion_sadness` varchar(45) NOT NULL, PRIMARY KEY (`CustomerID`,`CallID`))";
-			String mysql3= "CREATE TABLE `PhoneCall` (`CallID` varchar(45) NOT NULL,`CustomerID` varchar(45) NOT NULL,`AgentID` varchar(45) NOT NULL,PRIMARY KEY (`CallID`))";
-			String mysql4= "CREATE TABLE `VoiceSignals` (`StreamID` varchar(45) NOT NULL, `CallID` varchar(45) NOT NULL,`RawStream` blob NOT NULL, PRIMARY KEY (`StreamID`))";
+			String mysql3= "CREATE TABLE `PhoneCall` (`CallID` varchar(45) NOT NULL,`CustomerID` varchar(45) NOT NULL,`AgentID` varchar(45) NOT NULL,'Timestamp_beginning' BIGINT NOT NULL, PRIMARY KEY (`CallID`))";
+			String mysql4= "CREATE TABLE `VoiceSignals` (`StreamID` varchar(45) NOT NULL, `CallID` varchar(45) NOT NULL, PRIMARY KEY (`StreamID`))";
 			
 			//Creating the tables
 			createDBTable(con,mysql);
@@ -143,7 +143,7 @@ public class DataBase {
 		   Statement stmt = con.createStatement();
 
 		   stmt.executeUpdate(myTable);
-		   System.out.println("TABLE reated successfully...");
+		   System.out.println("TABLE created successfully...");
 		   return true;
 	   }catch(SQLException se){
 		   

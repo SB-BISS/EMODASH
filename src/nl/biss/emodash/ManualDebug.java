@@ -81,8 +81,10 @@ public class ManualDebug {
 	
 	
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-			sendWav();
+		// TODO Auto-generated method stub#
+		
+		//System.out.println(System.currentTimeMillis());
+	    sendWav();
 	}
 
 }
