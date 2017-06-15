@@ -1,0 +1,10 @@
+.DS_Store
+a01.wav_window_1.wav
+a01.wav_window_2.wav
+a02.wav_window_1.wav
+a02.wav_window_2.wav
+a03.wav_window_1.wav
+a04.wav_window_1.wav
+a04.wav_window_2.wav
+a05.wav_window_1.wav
+a05.wav_window_2.wav
