@@ -15,6 +15,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import nl.biss.emodash.pojo.WaveWrapper;
 
 public class ManualDebug {
@@ -54,11 +56,19 @@ public class ManualDebug {
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             
+            
+            
            String getres = template.getForObject("http://localhost:8080/init", String.class);
            
            System.out.println(getres);
            
            wav.setId("ag");
+           
+           
+           ObjectMapper mapper = new ObjectMapper();
+           System.out.println(mapper.writeValueAsString(wav));
+           
+           
            ResponseEntity<String> response =  template.postForEntity(uri,  wav, String.class);
            
 

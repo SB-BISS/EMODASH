@@ -23,7 +23,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import nl.biss.emodash.pojo.EmotionClass;
 import nl.biss.emodash.pojo.WaveWrapper;
 
-
+import java.util.Base64;
 /**
  * 
  * Assumptions: 
@@ -57,6 +57,98 @@ public class CallReceiverStub {
 	
 	
 	/**
+	 * Work around string based.
+	 * @param file
+	 * @return
+	 */
+	
+	@PostMapping(value="/post_wave_agent_string") 
+	public String AgentChannelProcessingString(@RequestBody String file) {
+		
+		//System.err.print(file);
+		
+		JSONObject jsonObject = new JSONObject(file);
+		String Base64P= jsonObject.getString("wav_stream"); //base64 from Python
+		byte[] bytes=  Base64.getDecoder().decode(Base64P);
+		
+		
+		String agentid=jsonObject.getString("id");
+		//the call id must be assigned externally
+		String callid = jsonObject.getString("callId");;
+		
+		// ->
+		//  annotate(file)
+		
+		//it should get a time stamp too, starting from here
+		//for a matter of synch problems
+		
+		long timestamp = System.currentTimeMillis();
+		
+		//most important one
+		EmotionClass emo_annotations  = get_annotations("agent",bytes); //simply apply the model.
+		
+		//we need to accept the situation in which the annotations may fail. Each of the annotations
+		//should be handled asynchronously
+		//send it to the storing services
+		String chunkid = record_file(callid,bytes, agentid, timestamp); //chunkid must be assigned by the database.
+		record_annotations(chunkid,agentid, emo_annotations,timestamp); //this has to be sent to the WS for storing the data
+		// for modularity purposes we shall have it in a different WS
+			
+		
+		return "ok";
+
+	}	
+	
+
+
+	/**
+	 * Work around string based.
+	 * @param file
+	 * @return
+	 */
+	
+	@PostMapping("/post_wave_customer_string")
+	public String CustomerChannelProcessing(@RequestBody String file){
+		
+		//System.err.print(file);
+
+		
+		JSONObject jsonObject = new JSONObject(file);
+		String Base64P= jsonObject.getString("wav_stream"); //base64 from Python
+		byte[] bytes=  Base64.getDecoder().decode(Base64P);
+		
+		
+		String agentid=jsonObject.getString("id");
+		//the call id must be assigned externally
+		String callid = jsonObject.getString("callId");;
+		
+		// ->
+		//  annotate(file)
+		
+		//it should get a time stamp too, starting from here
+		//for a matter of synch problems
+		
+		long timestamp = System.currentTimeMillis();
+		
+		//most important one
+		EmotionClass emo_annotations  = get_annotations("customer",bytes); //simply apply the model.
+		
+		//we need to accept the situation in which the annotations may fail. Each of the annotations
+		//should be handled asynchronously
+		//send it to the storing services
+		String chunkid = record_file(callid,bytes, agentid, timestamp); //chunkid must be assigned by the database.
+		record_annotations(chunkid,agentid, emo_annotations,timestamp); //this has to be sent to the WS for storing the data
+		// for modularity purposes we shall have it in a different WS
+				
+		
+		return "ok";
+		
+	}
+	
+	
+	
+	
+	/**
 	 * 
 	 * Channel of the caller agent, the file posted should be a wave file
 	 * the agent id should be included.
@@ -83,7 +175,7 @@ public class CallReceiverStub {
 		long timestamp = System.currentTimeMillis();
 		
 		//most important one
-		EmotionClass emo_annotations  = get_annotations(file.getWav_stream()); //simply apply the model.
+		EmotionClass emo_annotations  = get_annotations("agent",file.getWav_stream()); //simply apply the model.
 		//we need to accept the situation in which the annotations may fail. Each of the annotations
 		//should be handled asynchronously
 		//send it to the storing services
@@ -94,6 +186,51 @@ public class CallReceiverStub {
 		
         return "Success";
     }
+	
+	/**
+	 * Duplicated method: we want to distinguish the customer and agent channel.
+	 * In the future they may need a different way to be handled.
+	 * 
+	 * @param file
+	 * @return
+	 */
+	
+	
+	
+	@PostMapping("/post_wave_customer")
+	public String CustomerChannelProcessing(@RequestBody WaveWrapper file){
+
+		//we shall have a channel for the customer too.
+		//here we expect a wav file of about 4 seconds.
+		//same process as for the agent, but associated to the customer
+		//ASSUMPTION: we know the customer id at this point in time.
+		
+		String customerid=file.getId();
+		String callid= file.getCallId();
+		
+		// ->
+		//  annotate(file)
+		
+		//it should get a time stamp too, starting from here
+		//for a matter of synch problems
+		
+		long timestamp = System.currentTimeMillis();
+		
+		//most important one
+		EmotionClass emo_annotations  = get_annotations("customer",file.getWav_stream()); 
+		//we need to accept the situation in which the annotations may fail. Each of the annotations
+		//should be handled asynchronously
+		//send it to the storing services
+		String chunkid = record_file(callid,file.getWav_stream(), customerid, timestamp);
+		record_annotations(chunkid,customerid, emo_annotations,timestamp); //this has to be sent to the WS for storing the data
+		// for modularity purposes we shall have it in a different WS
+		
+		
+        return "Success";
+    }
+	
+
+	
 	
 
 	
@@ -139,7 +276,7 @@ public class CallReceiverStub {
 	 * @return
 	 */
 
-	private EmotionClass get_annotations(byte[] bs) {
+	private EmotionClass get_annotations(String type, byte[] bs) {
 		// TODO Auto-generated method stub
 		
 		//a list of annotators should be considered here, they should 
@@ -162,13 +299,14 @@ public class CallReceiverStub {
 
 		HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<MultiValueMap<String,String>>(map, headers);
 
-		String getresString = template.postForObject( location_annotator, request , String.class );
+		String getresString = template.postForObject( location_annotator+"/"+type, request , String.class );
         
         //String getresString = template.postForObject(location_annotator, request, String.class);
+		System.err.println(getresString);
 
         JSONObject getres = new JSONObject(getresString);
         
-        String[] predictionarr = getres.getJSONArray("predictions").get(0).toString().replaceAll("[", "").replaceAll("]", "").split(",");
+        String[] predictionarr = getres.getJSONArray("predictions").toString().replace("[", "").replace("]", "").split(",");
         
         
         //Anger, Disgust,Fear... as below...
@@ -211,48 +349,6 @@ public class CallReceiverStub {
 	}
 
 
-	/**
-	 * Duplicated method: we want to distinguish the customer and agent channel.
-	 * In the future they may need a different way to be handled.
-	 * 
-	 * @param file
-	 * @return
-	 */
-	
-	
-	
-	@PostMapping("/post_wave_customer")
-	public String CustomerChannelProcessing(@RequestBody WaveWrapper file){
-
-		//we shall have a channel for the customer too.
-		//here we expect a wav file of about 4 seconds.
-		//same process as for the agent, but associated to the customer
-		//ASSUMPTION: we know the customer id at this point in time.
-		
-		String customerid=file.getId();
-		String callid= file.getCallId();
-		
-		// ->
-		//  annotate(file)
-		
-		//it should get a time stamp too, starting from here
-		//for a matter of synch problems
-		
-		long timestamp = System.currentTimeMillis();
-		
-		//most important one
-		EmotionClass emo_annotations  = get_annotations(file.getWav_stream()); 
-		//we need to accept the situation in which the annotations may fail. Each of the annotations
-		//should be handled asynchronously
-		//send it to the storing services
-		String chunkid = record_file(callid,file.getWav_stream(), customerid, timestamp);
-		record_annotations(chunkid,customerid, emo_annotations,timestamp); //this has to be sent to the WS for storing the data
-		// for modularity purposes we shall have it in a different WS
-		
-		
-        return "Success";
-    }
-	
 	
 	/**
 	 * This method is meant to register all the DBs in which the speech samples have to be saved.

@@ -15,6 +15,13 @@ public class WaveWrapper implements Serializable{
 	//adapters.
 	private String callid;
 	
+	
+	public WaveWrapper(){
+		super();
+	}
+	
+	
+	
 	public byte[] getWav_stream() {
 		return wav_stream;
 	}

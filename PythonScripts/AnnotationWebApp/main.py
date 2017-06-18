@@ -166,6 +166,6 @@ def writeTarget():
     return redirect('/audioAnnotation')
 
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True,port=int("50001"), host='0.0.0.0')
 
 
