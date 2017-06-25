@@ -1,11 +1,14 @@
 package nl.biss.emodash;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
 
 import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.PreparedStatement;
 import com.mysql.jdbc.Statement;
 
 public class EmodashQueries {
@@ -86,6 +89,33 @@ public void insertCallId(String CallId, String AgentId, String CustomerId){
 		e.printStackTrace();
 	}
 	
+	
+}
+
+
+
+public void insertVoice(String StreamId, String CallId,String PersonId, byte[] file){
+	
+	
+	String sql = "INSERT INTO voicesignals (StreamId, CallId, PersonId, voice) values (?, ?, ?,?)";
+    java.sql.PreparedStatement statement;
+	try {
+		statement = conn.prepareStatement(sql);
+		InputStream inputStream = new ByteArrayInputStream(file);
+
+		statement.setString(0,StreamId);
+		statement.setString(1,CallId);
+		statement.setString(2,PersonId);
+		statement.setBlob(3, inputStream);
+			
+		
+		
+	} catch (SQLException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+    
+   
 	
 }
 

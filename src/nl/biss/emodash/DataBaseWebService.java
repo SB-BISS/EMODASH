@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.LinkedList;
 
 import org.json.JSONObject;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,10 +13,82 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.google.gson.Gson;
+
 import nl.biss.emodash.pojo.AnagraphicData;
+import nl.biss.emodash.pojo.EmotionClass;
+import nl.biss.emodash.pojo.SingleEmotion;
 
 @RestController
 public class DataBaseWebService {
+	
+	
+	
+	
+	
+	/**
+	 * 
+	 * First:
+	 * session id
+	 * anagraphical data
+	 * Previous interaction history
+	 * 
+	 * 
+	 * Get Customer Ids
+	 * 
+	 * @param agent_id
+	 * @param customer_id
+	 * @return
+	 */
+	
+	
+	@GetMapping("/get_customer_ids")
+	public String get_customer_ids(){
+		
+	
+		LinkedList<String> customerids = new LinkedList<String>();
+		
+	   //singleton
+	   EmodashQueries qr= 	EmodashQueries.getEmodashQueryDb();
+		
+		//json return
+		
+		// select the last call id
+	   
+		ResultSet set = qr.emodashQuery("Select CustomerID from Customer; ");
+				
+		try {
+			while(set.next()){
+				customerids.add(set.getString("CustomerID"));	
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		Gson gson = new Gson();
+		
+		String sendids = gson.toJson(customerids);
+		System.out.println("IDS" + sendids);
+		
+		return sendids;
+		
+		//register here
+		
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	
@@ -114,8 +187,8 @@ public class DataBaseWebService {
 	
 	
 	
-	@PostMapping("/get_anagraphic_data")
-	public String get_anagraphic_data(@RequestBody String customer_id){
+	@GetMapping("/get_anagraphic_data")
+	public String get_anagraphic_data(@RequestParam("customer_id") String customer_id){
 		
 		//json return
 		//SQL query here
@@ -124,7 +197,7 @@ public class DataBaseWebService {
 		
 		JSONObject jsonObj = new JSONObject( datapojo );
 		
-		return jsonObj.toString(); //will this work ok?
+		return jsonObj.toString(); //will this work ok? yes it does, wit JS.
 		
 		//register here
 	}
@@ -158,15 +231,19 @@ public class DataBaseWebService {
 		 String Name=set.getString("Name");
 	     String Sex=	set.getString("Sex");
 		 String Surname=	set.getString("Surname");
-		 String Adress=	set.getString("Adress");
+		 String Address=	set.getString("Address");
+		 String Region = set.getString("Region");
+		 String Postal_code = set.getString("postal_code");
+		 
 		 AnagraphicData datapojo= new AnagraphicData();
 			
 			datapojo.setAge(Age);
+			datapojo.setPostalCode(Postal_code);
 			datapojo.setName(Name);
 			datapojo.setGender(Sex);
-			datapojo.setAdress(Adress);
+			datapojo.setAddress(Address);
 			datapojo.setSurname(Surname);
-			
+			datapojo.setRegion(Region);
 			set.close();
 			
 			return datapojo;
@@ -181,13 +258,49 @@ public class DataBaseWebService {
 
 
 
-	@GetMapping("/customer_emotions")
+	@GetMapping("/customer_emotions_live")
 	public String customer_emotions(@RequestParam("customer_id") String customer_id, @RequestParam("call_id") String session_id){
 		
 		EmodashQueries qr= 	EmodashQueries.getEmodashQueryDb();
 
-		ResultSet set = qr.emodashQuery("Select * from Emotions where Emotions.customerId='"+ customer_id +"', Emotions.callId = '" +session_id+ "';");
+		ResultSet set = qr.emodashQuery("Select * from Emotions where Emotions.customerId='"+ customer_id +"', Emotions.callId = '" +session_id+ "' order by Timestamp desc limit 60;");
 		
+		LinkedList<SingleEmotion> emotionList = new LinkedList<SingleEmotion>();
+		
+		try {
+			if(set.getFetchSize()==0){
+				
+				
+				return "[]";
+				
+			}else{
+				
+				
+				while(set.next()){
+					
+					
+				   String type= set.getString("EmotionType");
+				   float value = set.getFloat("Value");
+					
+				   SingleEmotion emo= new SingleEmotion(type,value);
+				   //
+				   emotionList.addFirst(emo);
+				   
+				   
+				}
+				
+				
+				Gson gs = new Gson();
+				gs.toJson(emotionList);
+				
+				return emotionList.toString();
+				
+			}
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		//Again json list of emotions
 		//query to db here.
@@ -196,28 +309,68 @@ public class DataBaseWebService {
 		//Current Emotions ordered in time,
 		//Just the last one !
 		
-		return "Cutomer_Emotions";
+		return "[]";
 		
 		//register here
 		
 	}
 	
 	
-	@GetMapping("/agent_emotions")
+	@GetMapping("/agent_emotions_live")
 	public String agent_emotions(@RequestParam("agent_id") String agent_id, @RequestParam("call_id") String session_id){
 		
 		EmodashQueries qr= 	EmodashQueries.getEmodashQueryDb();
-		ResultSet set = qr.emodashQuery("Select * from Emotions where Emotions.customerId='"+ agent_id +"', Emotions.callId = '" +session_id+ "';");
 
+		ResultSet set = qr.emodashQuery("Select * from Emotions where Emotions.customerId='"+ agent_id +"', Emotions.callId = '" +session_id+ "' order by Timestamp desc limit 60;");
+		
+		LinkedList<SingleEmotion> emotionList = new LinkedList<SingleEmotion>();
+		
+		try {
+			if(set.getFetchSize()==0){
+				
+				
+				return "[]";
+				
+			}else{
+				
+				
+				while(set.next()){
+					
+					
+				   String type= set.getString("EmotionType");
+				   float value = set.getFloat("Value");
+					
+				   SingleEmotion emo= new SingleEmotion(type,value);
+				   //
+				   emotionList.addFirst(emo);
+				   
+				   
+				}
+				
+				
+				Gson gs = new Gson();
+				gs.toJson(emotionList);
+				
+				return emotionList.toString();
+				
+			}
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		//Again json list of emotions
+		//query to db here.
+		
 		//The list should have: session id
 		//Current Emotions ordered in time,
 		//Just the last one !
 		
+		return "[]";
 		
+		//register here
 		
-		
-		
-		return "Agent_emotions";
 	}
 	
 	

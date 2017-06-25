@@ -2,6 +2,11 @@ package nl.biss.emodash;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.LinkedList;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 
 import org.json.JSONObject;
 import org.springframework.http.HttpEntity;
@@ -57,7 +62,10 @@ public class CallReceiverStub {
 	
 	
 	/**
-	 * Work around string based.
+	 * Work around string based. I have a reason to have the same code for agent and customer
+	 * both, the files have to be run in parallel, EXACTLY at the same time and it really becomes difficult with one method.
+	 * 
+	 * 
 	 * @param file
 	 * @return
 	 */
@@ -65,34 +73,40 @@ public class CallReceiverStub {
 	@PostMapping(value="/post_wave_agent_string") 
 	public String AgentChannelProcessingString(@RequestBody String file) {
 		
-		//System.err.print(file);
+	ExecutorService executor = Executors.newSingleThreadExecutor(); //to allow for a faster return to the python service
 		
-		JSONObject jsonObject = new JSONObject(file);
-		String Base64P= jsonObject.getString("wav_stream"); //base64 from Python
-		byte[] bytes=  Base64.getDecoder().decode(Base64P);
+		//Asynchronous return
+		FutureTask<String> future =  new FutureTask<String>(new Callable<String>() {
+	         public String call() {
+	        	 
+	        	JSONObject jsonObject = new JSONObject(file);
+	     		String Base64P= jsonObject.getString("wav_stream"); //base64 from Python
+	     		byte[] bytes=  Base64.getDecoder().decode(Base64P);
+	     		
+	     		
+	     		String agentid=jsonObject.getString("id");
+	     		//the call id must be assigned externally
+	     		String callid = jsonObject.getString("callId");;
+	     		
+
+	        	long timestamp = System.currentTimeMillis();
+	     		
+	     		//most important one
+	     		EmotionClass emo_annotations  = get_annotations("agent",bytes); //simply apply the model.
+	     		
+	     		//we need to accept the situation in which the annotations may fail. Each of the annotations
+	     		//should be handled asynchronously
+	     		//send it to the storing services
+	     		String chunkid = record_file(callid,bytes, agentid, timestamp); //chunkid must be assigned by the database.
+	     		record_annotations(chunkid,agentid, emo_annotations,timestamp); //this has to be sent to the WS for storing the data
+	     		// for modularity purposes we shall have it in a different WS
+				return chunkid;
+	     		
+	         
+	         }});
+		executor.execute(future);
 		
-		
-		String agentid=jsonObject.getString("id");
-		//the call id must be assigned externally
-		String callid = jsonObject.getString("callId");;
-		
-		// ->
-		//  annotate(file)
-		
-		//it should get a time stamp too, starting from here
-		//for a matter of synch problems
-		
-		long timestamp = System.currentTimeMillis();
-		
-		//most important one
-		EmotionClass emo_annotations  = get_annotations("agent",bytes); //simply apply the model.
-		
-		//we need to accept the situation in which the annotations may fail. Each of the annotations
-		//should be handled asynchronously
-		//send it to the storing services
-		String chunkid = record_file(callid,bytes, agentid, timestamp); //chunkid must be assigned by the database.
-		record_annotations(chunkid,agentid, emo_annotations,timestamp); //this has to be sent to the WS for storing the data
-		// for modularity purposes we shall have it in a different WS
+				
 			
 		
 		return "ok";
@@ -113,14 +127,6 @@ public class CallReceiverStub {
 		//System.err.print(file);
 
 		
-		JSONObject jsonObject = new JSONObject(file);
-		String Base64P= jsonObject.getString("wav_stream"); //base64 from Python
-		byte[] bytes=  Base64.getDecoder().decode(Base64P);
-		
-		
-		String agentid=jsonObject.getString("id");
-		//the call id must be assigned externally
-		String callid = jsonObject.getString("callId");;
 		
 		// ->
 		//  annotate(file)
@@ -128,17 +134,39 @@ public class CallReceiverStub {
 		//it should get a time stamp too, starting from here
 		//for a matter of synch problems
 		
-		long timestamp = System.currentTimeMillis();
+		ExecutorService executor = Executors.newSingleThreadExecutor(); //to allow for a faster return to the python service
 		
-		//most important one
-		EmotionClass emo_annotations  = get_annotations("customer",bytes); //simply apply the model.
+		//Asynchronous return
+		FutureTask<String> future =  new FutureTask<String>(new Callable<String>() {
+	         public String call() {
+	        	 
+	        	JSONObject jsonObject = new JSONObject(file);
+	     		String Base64P= jsonObject.getString("wav_stream"); //base64 from Python
+	     		byte[] bytes=  Base64.getDecoder().decode(Base64P);
+	     		
+	     		
+	     		String agentid=jsonObject.getString("id");
+	     		//the call id must be assigned externally
+	     		String callid = jsonObject.getString("callId");;
+	     		
+
+	        	long timestamp = System.currentTimeMillis();
+	     		
+	     		//most important one
+	     		EmotionClass emo_annotations  = get_annotations("customer",bytes); //simply apply the model.
+	     		
+	     		//we need to accept the situation in which the annotations may fail. Each of the annotations
+	     		//should be handled asynchronously
+	     		//send it to the storing services
+	     		String chunkid = record_file(callid,bytes, agentid, timestamp); //chunkid must be assigned by the database.
+	     		record_annotations(chunkid,agentid, emo_annotations,timestamp); //this has to be sent to the WS for storing the data
+	     		// for modularity purposes we shall have it in a different WS
+				return chunkid;
+	     		
+	         
+	         }});
+		executor.execute(future);
 		
-		//we need to accept the situation in which the annotations may fail. Each of the annotations
-		//should be handled asynchronously
-		//send it to the storing services
-		String chunkid = record_file(callid,bytes, agentid, timestamp); //chunkid must be assigned by the database.
-		record_annotations(chunkid,agentid, emo_annotations,timestamp); //this has to be sent to the WS for storing the data
-		// for modularity purposes we shall have it in a different WS
 				
 		
 		return "ok";
@@ -258,7 +286,9 @@ public class CallReceiverStub {
 		
 		//if the call does not exist yet, we need to create the call. The callid is assumed to 
 		//be provided by someone else !
-		
+		EmodashQueries qr= 	EmodashQueries.getEmodashQueryDb();
+		String StreamId = UUID.randomUUID().toString();
+		qr.insertVoice(StreamId, callid2,id, bs);
 		
 		String callid = "STUB"; // communication with the DB here.
 		

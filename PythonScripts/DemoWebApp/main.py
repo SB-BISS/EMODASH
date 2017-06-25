@@ -1,9 +1,9 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Mon May 29 13:29:04 2017
+Created on Mon June 03 13:29:04 2017
 
-@author: guysimons
+@author: stefano bromuri
 """
 
 import os
@@ -20,6 +20,7 @@ import csv
 from pydub import AudioSegment
 
 import pyglet
+from __builtin__ import file
 
 ############SPLIT FILES FUNCTION##################
 def splitAudioFiles(raw_files_directory, window_storage_directory):
@@ -73,6 +74,10 @@ def play_sound():
     customer_directory = app.config['UPLOAD_FOLDER_CUSTOMER']+app.config["windowDirectory"]
     filenames_agent = [name for name in os.listdir(agent_directory) if os.path.isfile(os.path.join(agent_directory, name))]
     filenames_customer = [name for name in os.listdir(customer_directory) if os.path.isfile(os.path.join(customer_directory, name))]
+    filenames_agent.sort(key=lambda f: int(filter(str.isdigit, f)))
+    print filenames_agent
+    filenames_customer.sort(key=lambda f: int(filter(str.isdigit, f)))
+    print filenames_customer
   
     for i in range(0,len(filenames_agent)):#same length for files
         file_a = filenames_agent[i]
@@ -99,13 +104,13 @@ def play_sound():
         
         j_customer = json.dumps(dictionary_agent)
         
-        print(j_customer)
+        #print(j_customer)
         
         #it is a uggly hack to put
         post_response = requests.post(url=app.config['url_endpoint']+'post_wave_agent_string', data=j_agent)
-        print(post_response)
+        #print(post_response)
         post_response = requests.post(url=app.config['url_endpoint']+'post_wave_customer_string', data=j_customer)
-        print(post_response)
+        #print(post_response)
         
         clever_function() # each three seconds
         

@@ -13,7 +13,10 @@ import FeatureExtractor
 import json
 import urllib3
 import certifi
-
+from sklearn.externals import joblib
+import thread
+import time
+from SubmitterTDR import SubmitterTDR
 
 
 UPLOAD_FOLDER = './'
@@ -27,8 +30,8 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # load json and create model
 
 model = FeatureExtractor.baseline_model()
-model.load_weights('./EmoDashAnnotation/Resources/EmoDashANN_weights_v1.h5')
-
+model.load_weights('./EmoDashAnnotation/Resources/EmoDashANN_weights_v2.h5')
+Rescaler = joblib.load('./EmoDashAnnotation/Resources/featuresScaled.pkl')
 
 # use with or without proxy
 http = urllib3.PoolManager(
@@ -93,23 +96,45 @@ def upload_customer():
         
         #the emotion detector object to be used.
         global model
+        global Rescaler
+        
+        
+        import timeit
+
+        start = timeit.default_timer()
+        
         file_features = FeatureExtractor.extract_features(outputfilename)
+        file_features = Rescaler.transform(file_features)
+        
+        end = timeit.default_timer()
+        
         
         prediction= model.predict(file_features)
         
-        body='{"mode":"sync", "messageType":"46e86c250974adcc08f2", "messages":[{"Anger":prediction[0], "Disgust":prediction[1], "Fear":prediction[2], "Hapiness":prediction[3],"Neutral":prediction[4],  "Sadness":prediction[5], "Surprise":prediction[6] }]}'
+        print("TIMEIT:" + str(end-start))
+
+        
+        #body='{"mode":"sync", "messageType":"46e86c250974adcc08f2", "messages":[{"Anger":prediction[0], "Disgust":prediction[1], "Fear":prediction[2], "Hapiness":prediction[3],"Neutral":prediction[4],  "Sadness":prediction[5], "Surprise":prediction[6] }]}'
+        body={"mode":"sync",  "messageType":"46e86c250974adcc08f2", "messages":[{"Anger":round(prediction[0][0],2), "Disgust":round(prediction[0][1],2), "Fear":round(prediction[0][2],2), "Hapiness":round(prediction[0][3],2),"Neutral":round(prediction[0][4],2),  "Sadness":round(prediction[0][5],2), "Surprise":round(prediction[0][6],2) }]}
+    
+        print('CUSTOMER EMOTIONS')
+        print(body)
         
         try:
-            r = http.urlopen('POST', url, body=body, headers=headers)
+            r = http.urlopen('POST', url, body=str(body), headers=headers)# for the engineer coming after me, screw you !
             print(r.status)
             print(r.data)
         
         except urllib3.exceptions.SSLError as e:
             print (e)
-       
         
-    
         print(prediction)
+        
+        #and we get rid of the long wait ! 
+        #thread = SubmitterTDR(1,body)
+        #thread.start()
+    
+        #print(prediction)
         #an array of probabilities...
         return json.dumps({'predictions': prediction.tolist()[0]})
 
@@ -148,10 +173,14 @@ def upload_agent():
         
         prediction= model.predict(file_features)
         #TYPO IN HAPPINESS !!!
-        body='{"mode":"sync", "messageType":"70281a5b78eba98c2e2c", "messages":[{"Anger":prediction[0], "Disgust":prediction[1], "Fear":prediction[2], "Hapiness":prediction[3],"Neutral":prediction[4],  "Sadness":prediction[5], "Surprise":prediction[6] }]}'
+        body={"mode":"sync",  "messageType":"70281a5b78eba98c2e2c", "messages":[{"Anger":round(prediction[0][0],2), "Disgust":round(prediction[0][1],2), "Fear":round(prediction[0][2],2), "Hapiness":round(prediction[0][3],2),"Neutral":round(prediction[0][4],2),  "Sadness":round(prediction[0][5],2), "Surprise":round(prediction[0][6],2) }]}
+    
+        #body='{"mode":"sync", "messageType":"70281a5b78eba98c2e2c", "messages":[{"Anger":0.0, "Disgust":0.0, "Fear":0.0, "Hapiness":0.1,"Neutral":0.1,  "Sadness":0.1, "Surprise":0.2 }]}'
+        print('AGENT EMOTIONS')
+        print(body)
         
         try:
-            r = http.urlopen('POST', url, body=body, headers=headers)
+            r = http.urlopen('POST', url, body=str(body), headers=headers)# for the engineer coming after me, screw you !
             print(r.status)
             print(r.data)
         
@@ -159,6 +188,11 @@ def upload_agent():
             print (e)
         
         print(prediction)
+        
+        
+        #thread = SubmitterTDR(1,body)
+        #thread.start()
+        
         #an array of probabilities...
         return json.dumps({'predictions': prediction.tolist()[0]})
 

@@ -10,7 +10,9 @@ public class AnagraphicData implements Serializable{
 	    private int age;
 	    private String gender;
 	    private String surname;
-	    private String adress;
+	    private String address;
+	    private String region;
+		private String postal_code;
 
 	    public String getGender() {
 			return gender;
@@ -26,21 +28,38 @@ public class AnagraphicData implements Serializable{
 	    
 		public void setAdress(String adress) {
 			// TODO Auto-generated method stub
-			this.adress=adress;
+			this.address=adress;
 		}
 		
 		
 		
+		public String getAddress() {
+			return address;
+		}
+		public void setAddress(String address) {
+			this.address = address;
+		}
+		public String getRegion() {
+			return region;
+		}
+		public void setRegion(String region) {
+			this.region = region;
+		}
 		public String getSurname() {
 			return surname;
 		}
-		public String getAdress() {
-			return adress;
-		}
+	
 		public void setSurname(String surname) {
 			// TODO Auto-generated method stub
 			this.surname= surname;
 		}
-
+		public void setPostalCode(String postal_code) {
+			// TODO Auto-generated method stub
+			this.postal_code = postal_code;
+		}
+		
+		public String getPostalCode(){
+			return this.postal_code;
+		}
 	
 }

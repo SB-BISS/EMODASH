@@ -13,12 +13,15 @@ from pyAudioAnalysis import audioBasicIO
 from pyAudioAnalysis import audioFeatureExtraction
 import numpy as np
 import csv
+from keras.models import Sequential
+from keras.layers import Dense, Dropout
 from keras.models import model_from_json
 from sklearn.externals import joblib
 from pydub import AudioSegment
 
 ############SPLIT FILES FUNCTION##################
 def splitAudioFiles(raw_files_directory, window_storage_directory):
+        print('heres')
         filenames = [name for name in os.listdir(raw_files_directory) if not name == '.DS_Store']
         for filename in filenames:
             audiofile = AudioSegment.from_wav(os.path.join(raw_files_directory,  filename))
@@ -43,6 +46,7 @@ def featureExtraction(file_path):
         
         
         [Fs, x] = audioBasicIO.readAudioFile(file_path)
+        x= audioBasicIO.stereo2mono(x) #necessary conversion for pyaudio analysis
         features = audioFeatureExtraction.stFeatureExtraction(x, Fs, 0.05*Fs, 0.025*Fs)
         if (len(features)==0 or features.shape[1]<50):
             features = 'none'
@@ -55,25 +59,37 @@ def featureExtraction(file_path):
 
 def constructModel(filepath_model, filepath_weights):
         
-    json_file = open(filepath_model, 'r')
-    loaded_model_json = json_file.read()
-    json_file.close()
-    loaded_model = model_from_json(loaded_model_json)
+    #json_file = open(filepath_model, 'r')
+    #loaded_model_json = json_file.read()
+    #json_file.close()
+    #loaded_model = model_from_json(loaded_model_json)
+    loaded_model= baseline_model()
     loaded_model.load_weights(filepath_weights)
     loaded_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
     return loaded_model
 
+def baseline_model(optimizer = 'adam',units=70, prop=0.3):
+    # create model
+    model = Sequential()
+    model.add(Dense(input_dim=34, output_dim = units, activation='relu'))
+    model.add(Dropout(prop))
+    model.add(Dense(input_dim = units, output_dim = 7, activation='softmax'))
+    
+    model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+    return model
+
+
 ############DEFINE WEB APP VARIABLES##################
 app = Flask(__name__)
 
-app.config['UPLOAD_FOLDER'] = '/app/static/Resources/uploads/'
-app.config['windowDirectory'] = '/app/static/Resources/windowDirectory/'
-app.config['LOG'] = "/app/static/Resources/EmoDashLog.txt"
-app.config['ANN_MODEL'] = "/app/static/Resources/EmoDashANN_model_v1.json"
-app.config['ANN_WEIGHTS'] = "/app/static/Resources/EmoDashANN_weights_v1.h5"
-app.config['SCALER'] = "/app/static/Resources/featuresScaled.pkl"
-app.config['OUTPUT_FEATURES'] = "/app/static/Resources/features.csv"
-app.config['OUTPUT_TARGETS'] = "/app/static/Resources/targets.csv"
+app.config['UPLOAD_FOLDER'] = './static/Resources/uploads/'
+app.config['windowDirectory'] = './static/Resources/windowDirectory/'
+app.config['LOG'] = "./static/Resources/EmoDashLog.txt"
+app.config['ANN_MODEL'] = "./static/Resources/EmoDashANN_model_v1.json"
+app.config['ANN_WEIGHTS'] = "./static/Resources/EmoDashANN_weights_v1.h5"
+app.config['SCALER'] = "./static/Resources/featuresScaled.pkl"
+app.config['OUTPUT_FEATURES'] = "./static/Resources/features.csv"
+app.config['OUTPUT_TARGETS'] = "./static/Resources/targets.csv"
 app.config['ALLOWED_EXTENSIONS'] = set(['wav'])
 app.config['SECRET_KEY']='#1993#EmoDashWebApp'
 
@@ -105,6 +121,7 @@ def upload():
 
 @app.route('/split')
 def split():
+    print('here')
     splitAudioFiles(app.config['UPLOAD_FOLDER'], app.config['windowDirectory'])
     return render_template("splitFiles.html")
 
