@@ -83,7 +83,7 @@ demo = {
           }]
         ];
         
-        Chartist.Bar('#chartActivity', data, options, responsiveOptions);
+     Chartist.Bar('#chartActivity', data, options, responsiveOptions);
     
         var dataPreferences = {
             series: [

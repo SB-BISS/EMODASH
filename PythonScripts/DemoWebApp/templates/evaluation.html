@@ -41,35 +41,28 @@
       </div>
     </nav>
 
-    <div class="starter-template">
-            <h1>Uploading Files</h1>
-            <p class="lead">Select the files you want to annotate and upload them.
-              <form action="upload" method="post" enctype="multipart/form-data">
-                <input size="60" type="file" name="file"> <br>
-                <input type="submit" value="Upload">
-              </form>
-          </p>
+<p>{{filename}}</p>
+<br>
+<p>predicted emotion: {{prediction}}</p>
+<br>
+<form action="/submitForm" method="post">
+  <input type="radio" name="emotion" value="0">Angry</input>
+ <input type="radio" name="emotion" value="1">Disgust</input>
+ <input type="radio" name="emotion" value="2">Fear</input>
+ <input type="radio" name="emotion" value="3">Happiness</input>
+ <input type="radio" name="emotion" value="4">Neutral</input>
+ <input type="radio" name="emotion" value="5">Sadness</input>
+ <input type="radio" name="emotion" value="6">Surprise</input>
+ <input type="submit" value="Submit">
+</form>
+<br>
 
-            <h1>Splitting Files</h1>
-            <p class ="lead">
-              Press the split files button to split all uploaded files in 3-second windows.
-              <br>
-              <br>
-              <button type="button" class="btn btn-default">
-                <a href={{ url_for('split') }} name="dlbutton">split files</a>
-              </button>
-            </p>
-
-
-    </div>
-
+    <audio controls autoplay>
+      <source src = "/static/Resources/windowDirectory/{{filename}}" type="audio/wav">
+        Your browser does not support this audio format.
+      </audio>
 
 
 
 </body>
-
-
-
-
-
 </html>

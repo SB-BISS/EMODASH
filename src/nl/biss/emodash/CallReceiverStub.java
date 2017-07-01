@@ -1,6 +1,8 @@
 package nl.biss.emodash;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.sql.SQLException;
+import java.text.DecimalFormat;
 import java.util.LinkedList;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -74,7 +76,7 @@ public class CallReceiverStub {
 	public String AgentChannelProcessingString(@RequestBody String file) {
 		
 	ExecutorService executor = Executors.newSingleThreadExecutor(); //to allow for a faster return to the python service
-		
+	long timestamp = System.currentTimeMillis();
 		//Asynchronous return
 		FutureTask<String> future =  new FutureTask<String>(new Callable<String>() {
 	         public String call() {
@@ -89,7 +91,7 @@ public class CallReceiverStub {
 	     		String callid = jsonObject.getString("callId");;
 	     		
 
-	        	long timestamp = System.currentTimeMillis();
+	        	
 	     		
 	     		//most important one
 	     		EmotionClass emo_annotations  = get_annotations("agent",bytes); //simply apply the model.
@@ -97,10 +99,10 @@ public class CallReceiverStub {
 	     		//we need to accept the situation in which the annotations may fail. Each of the annotations
 	     		//should be handled asynchronously
 	     		//send it to the storing services
-	     		String chunkid = record_file(callid,bytes, agentid, timestamp); //chunkid must be assigned by the database.
-	     		record_annotations(chunkid,agentid, emo_annotations,timestamp); //this has to be sent to the WS for storing the data
+	     		String StreamId = record_file(callid,bytes, agentid, timestamp); //chunkid must be assigned by the database.
+	     		record_annotations(StreamId,callid, emo_annotations,timestamp); //this has to be sent to the WS for storing the data
 	     		// for modularity purposes we shall have it in a different WS
-				return chunkid;
+				return StreamId;
 	     		
 	         
 	         }});
@@ -135,7 +137,7 @@ public class CallReceiverStub {
 		//for a matter of synch problems
 		
 		ExecutorService executor = Executors.newSingleThreadExecutor(); //to allow for a faster return to the python service
-		
+		long timestamp = System.currentTimeMillis();
 		//Asynchronous return
 		FutureTask<String> future =  new FutureTask<String>(new Callable<String>() {
 	         public String call() {
@@ -145,12 +147,12 @@ public class CallReceiverStub {
 	     		byte[] bytes=  Base64.getDecoder().decode(Base64P);
 	     		
 	     		
-	     		String agentid=jsonObject.getString("id");
+	     		String customerid=jsonObject.getString("id");
 	     		//the call id must be assigned externally
 	     		String callid = jsonObject.getString("callId");;
 	     		
 
-	        	long timestamp = System.currentTimeMillis();
+	        	
 	     		
 	     		//most important one
 	     		EmotionClass emo_annotations  = get_annotations("customer",bytes); //simply apply the model.
@@ -158,10 +160,10 @@ public class CallReceiverStub {
 	     		//we need to accept the situation in which the annotations may fail. Each of the annotations
 	     		//should be handled asynchronously
 	     		//send it to the storing services
-	     		String chunkid = record_file(callid,bytes, agentid, timestamp); //chunkid must be assigned by the database.
-	     		record_annotations(chunkid,agentid, emo_annotations,timestamp); //this has to be sent to the WS for storing the data
+	     		String StreamId = record_file(callid,bytes, customerid, timestamp); //chunkid must be assigned by the database.
+	     		record_annotations(StreamId,callid, emo_annotations,timestamp); //this has to be sent to the WS for storing the data
 	     		// for modularity purposes we shall have it in a different WS
-				return chunkid;
+				return StreamId;
 	     		
 	         
 	         }});
@@ -207,8 +209,8 @@ public class CallReceiverStub {
 		//we need to accept the situation in which the annotations may fail. Each of the annotations
 		//should be handled asynchronously
 		//send it to the storing services
-		String chunkid = record_file(callid,file.getWav_stream(), agentid, timestamp); //chunkid must be assigned by the database.
-		record_annotations(chunkid,agentid, emo_annotations,timestamp); //this has to be sent to the WS for storing the data
+		String StreamId = record_file(callid,file.getWav_stream(), agentid, timestamp); //chunkid must be assigned by the database.
+		record_annotations(StreamId,callid, emo_annotations,timestamp); //this has to be sent to the WS for storing the data
 		// for modularity purposes we shall have it in a different WS
 		
 		
@@ -249,8 +251,9 @@ public class CallReceiverStub {
 		//we need to accept the situation in which the annotations may fail. Each of the annotations
 		//should be handled asynchronously
 		//send it to the storing services
-		String chunkid = record_file(callid,file.getWav_stream(), customerid, timestamp);
-		record_annotations(chunkid,customerid, emo_annotations,timestamp); //this has to be sent to the WS for storing the data
+		
+		String StreamId = record_file(callid,file.getWav_stream(), customerid, timestamp);
+		record_annotations(StreamId,callid, emo_annotations,timestamp); //this has to be sent to the WS for storing the data
 		// for modularity purposes we shall have it in a different WS
 		
 		
@@ -272,11 +275,34 @@ public class CallReceiverStub {
 	 * @param timestamp
 	 */
 	
-	private void record_annotations(String callid, String idcaller, EmotionClass emo_annotations, long timestamp) {
+	private void record_annotations(String StreamId, String callid, EmotionClass emo_annotations, long timestamp) {
 		// TODO Auto-generated method stub
 		
 		//call the service(s) in which the annotation should be registered.
 		//data base call here.
+		
+		float anger =emo_annotations.getAnger();
+		float disgust = emo_annotations.getDisgust();
+		float fear = emo_annotations.getFear();
+		float happiness = emo_annotations.getHappiness();
+		float neutral = emo_annotations.getNeutral();
+		float surprise = emo_annotations.getSurprise();
+		float sadness = emo_annotations.getSadness();
+		
+		EmodashQueries qr = new EmodashQueries();
+		
+		//create random id
+		
+		
+			qr.emodashUpdate("Insert into emotions (StreamId,EmotionType,Value, timestamp, CallId) values('"+StreamId + "','anger'," +anger +","+timestamp+ ",'" + callid+"');" );
+			qr.emodashUpdate("Insert into emotions (StreamId,EmotionType,Value, timestamp, CallId) values('"+StreamId + "','disgust'," +disgust +","+timestamp+ ",'" + callid+"');" );
+			qr.emodashUpdate("Insert into emotions (StreamId,EmotionType,Value, timestamp, CallId) values('"+StreamId + "','fear'," +fear +","+timestamp+ ",'" + callid+"');" );
+			qr.emodashUpdate("Insert into emotions (StreamId,EmotionType,Value, timestamp, CallId) values('"+StreamId + "','happiness'," +happiness +","+timestamp+ ",'" + callid+"');" );
+			qr.emodashUpdate("Insert into emotions (StreamId,EmotionType,Value, timestamp, CallId) values('"+StreamId + "','neutral'," +neutral +","+timestamp+ ",'" + callid+"');" );
+			qr.emodashUpdate("Insert into emotions (StreamId,EmotionType,Value, timestamp, CallId) values('"+StreamId + "','surprise'," +surprise +","+timestamp+ ",'" + callid+"');" );
+			qr.emodashUpdate("Insert into emotions (StreamId,EmotionType,Value, timestamp, CallId) values('"+StreamId + "','sadness'," +sadness +","+timestamp+ ",'" + callid+"');" );
+			
+			qr.connectionClose();
 		
 	}
 
@@ -286,13 +312,12 @@ public class CallReceiverStub {
 		
 		//if the call does not exist yet, we need to create the call. The callid is assumed to 
 		//be provided by someone else !
-		EmodashQueries qr= 	EmodashQueries.getEmodashQueryDb();
+		EmodashQueries qr=  new	EmodashQueries();
 		String StreamId = UUID.randomUUID().toString();
 		qr.insertVoice(StreamId, callid2,id, bs);
 		
-		String callid = "STUB"; // communication with the DB here.
-		
-		return callid;
+		qr.connectionClose();
+		return StreamId;
 	}
 
 	/**
@@ -344,6 +369,8 @@ public class CallReceiverStub {
         for(int i=0; i<predictionarr.length; i++){
         	
         	float f = Float.parseFloat(predictionarr[i]);
+        	DecimalFormat df = new DecimalFormat("#.##");
+        	f=Float.parseFloat(df.format(f));
         	
         	if(i==0){
         		emo.setAnger(f);

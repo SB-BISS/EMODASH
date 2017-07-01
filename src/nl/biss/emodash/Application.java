@@ -21,6 +21,11 @@ public class Application {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/get_anagraphic_data").allowedOrigins("*");
                 registry.addMapping("/get_customer_ids").allowedOrigins("*");
+                registry.addMapping("/customer_lastcall").allowedOrigins("*");
+                registry.addMapping("/agent_lastcall").allowedOrigins("*");
+                registry.addMapping("/get_call_id_with_customer").allowedOrigins("*");
+                registry.addMapping("/customer_emotions_live").allowedOrigins("*");
+                
             }
         };
     }

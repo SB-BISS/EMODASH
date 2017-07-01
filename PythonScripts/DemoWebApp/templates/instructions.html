@@ -8,7 +8,7 @@
   <meta content="width=device-width,initial-scale=1" name=viewport>
   <link href={{ url_for('static', filename='images/techruption.ico')  }} rel="icon" >
   <link href={{ url_for('static', filename='css/bootstrap.min.css')  }} rel="stylesheet">
-  <link href={{  url_for('static', filename='css/starter-template2.css')  }} rel="stylesheet">
+  <link href={{  url_for('static', filename='css/starter-template.css')  }} rel="stylesheet">
   <!--stylesheet. The url_for is a Flask function to find the url for a standard folder. Then, within the static folder you'll want to look for the css folder ccontaining the
   bootstrap min file.-->
 
@@ -34,35 +34,39 @@
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
             <li><a href="/instructions">Instructions</a></li>
-            <li><a href="/splitFiles">Split Files</a></li>
-            <li><a href="/audioAnnotation">Audio Annotation</a></li>
+            <li><a href="/splitFiles">Upload Files</a></li>
+            <li><a href="/PlayFiles">Play Files</a></li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
     </nav>
 
     <div class="starter-template">
-            <h1>Uploading Files</h1>
-            <p class="lead">Select the files you want to annotate and upload them.
-              <form action="upload" method="post" enctype="multipart/form-data">
-                <input size="60" type="file" name="file"> <br>
-                <input type="submit" value="Upload">
-              </form>
-          </p>
 
-            <h1>Splitting Files</h1>
-            <p class ="lead">
-              Press the split files button to split all uploaded files in 3-second windows.
-              <br>
-              <br>
-              <button type="button" class="btn btn-default">
-                <a href={{ url_for('split') }} name="dlbutton">split files</a>
-              </button>
-            </p>
-
+      <h1>Annotation instructions</h1>
+      <p class="lead">
+        To annotate audio files, follow the following steps:
+        <ul class="lead">
+        1. Go to the Split Files tab an upload the files you want to annotate
+        <br>
+        2. When you've uploaded the files, click on the "Split Files" button
+        <br>
+        3. Navigate to the "Audio Annotation" tab and here the splitted files will appear
+        <br>
+        4. Click on each file and specify the emotion that you hear in the audiofile and click "submit"
+        <ul>
+          <br>
+          <br>
+          <h1>Notes:</h1>
+          <br>
+          <br>
+          - Sometimes the splitted audiofiles are too short. When you click on such a short file in the "Audio Annotation" tab it vanishes. You can just ignore this.
+          <br>
+          <br>
+          - At this stage you don't need to pay much attention to the predicted emotions as they will likely be inaccurate. Through annotating more data the model can be improved later on.
+      </p>
 
     </div>
-
 
 
 

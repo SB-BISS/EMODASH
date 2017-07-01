@@ -17,6 +17,7 @@ from pyAudioAnalysis import audioBasicIO
 from pyAudioAnalysis import audioFeatureExtraction
 import numpy as np
 import csv
+import uuid
 from pydub import AudioSegment
 
 import pyglet
@@ -61,11 +62,18 @@ app.config['SECRET_KEY']='#1993#EmoDashWebApp'
 app.config['url_endpoint'] = 'http://localhost:8080/'
 
 
-######### delay function
+######### delay function to give the continuous effect
 def clever_function():
     time.sleep(3)
     return ""
 
+'''
+Simulation starting point, please notice that here one needs to change the customer id and the agent id
+in a normal kind of situation things would not be sent like this though ! 
+On thing that may stay the same is that the customer id and the agent id are set before the analysis, so
+the call is actually created from there. 
+
+'''
 
 @app.route('/PlaySound')    
 def play_sound():
@@ -78,6 +86,13 @@ def play_sound():
     print filenames_agent
     filenames_customer.sort(key=lambda f: int(filter(str.isdigit, f)))
     print filenames_customer
+  
+    
+    
+    #create the session before sending file names
+    callid = str(uuid.uuid4())
+    get_response = requests.get(url=app.config['url_endpoint']+"create_call?call_id="+ callid+ "&agent_id=ag1&customer_id=c0" )
+    print("session created" + str(get_response))
   
     for i in range(0,len(filenames_agent)):#same length for files
         file_a = filenames_agent[i]
@@ -97,14 +112,16 @@ def play_sound():
         data_c = in_file.read() # if you only wanted to read 512 bytes, do .read(512)
         in_file.close()
         
-        dictionary_agent = {"id":"ag1","callId":"call1","wav_stream": base64.b64encode(bytearray(data_a))}
-        dictionary_customer = {"id":"cus1","callId":"call1","wav_stream": base64.b64encode(bytearray(data_c))}
+        dictionary_agent = {"id":"ag1","callId":callid,"wav_stream": base64.b64encode(bytearray(data_a))}
+        dictionary_customer = {"id":"c0","callId":callid,"wav_stream": base64.b64encode(bytearray(data_c))}
         
         j_agent = json.dumps(dictionary_agent)
         
-        j_customer = json.dumps(dictionary_agent)
+        j_customer = json.dumps(dictionary_customer)
         
         #print(j_customer)
+        #create sesstion here
+        
         
         #it is a uggly hack to put
         post_response = requests.post(url=app.config['url_endpoint']+'post_wave_agent_string', data=j_agent)
@@ -114,6 +131,8 @@ def play_sound():
         
         clever_function() # each three seconds
         
+    get_response = requests.get(url=app.config['url_endpoint']+"end_call?call_id="+ callid+ "&agent_id=ag1&customer_id=c0" )
+    print("session ended" + str(get_response))
     #pyglet.app.run()
     return render_template("main.html")
 

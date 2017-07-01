@@ -41,35 +41,17 @@
       </div>
     </nav>
 
-    <div class="starter-template">
-            <h1>Uploading Files</h1>
-            <p class="lead">Select the files you want to annotate and upload them.
-              <form action="upload" method="post" enctype="multipart/form-data">
-                <input size="60" type="file" name="file"> <br>
-                <input type="submit" value="Upload">
-              </form>
-          </p>
+    <ul>
+    {% for i in filenames %}
 
-            <h1>Splitting Files</h1>
-            <p class ="lead">
-              Press the split files button to split all uploaded files in 3-second windows.
-              <br>
-              <br>
-              <button type="button" class="btn btn-default">
-                <a href={{ url_for('split') }} name="dlbutton">split files</a>
-              </button>
-            </p>
+    <li> <a href = {{  url_for("evaluation", filename = i)  }}> {{i}} </a></li>
 
+    {% endfor %}
 
-    </div>
+  </ul>
 
 
 
 
 </body>
-
-
-
-
-
 </html>

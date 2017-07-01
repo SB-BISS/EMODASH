@@ -1,6 +1,8 @@
 package nl.biss.emodash.pojo;
 
-public class SingleEmotion {
+import java.io.Serializable;
+
+public class SingleEmotion implements Serializable{
 	
 	private String Emotiontype;
 	private float value = 0.0f;

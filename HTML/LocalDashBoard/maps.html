@@ -34,7 +34,7 @@
 <body>
 
 <div class="wrapper">
-    <div class="sidebar" data-color="purple" data-image="assets/img/sidebar-5.jpg">
+    <div class="sidebar" data-color="blue" data-image="assets/img/sidebar-5.jpg">
 
     <!--   you can change the color of the sidebar using: data-color="blue | azure | green | orange | red | purple" -->
 
@@ -42,7 +42,7 @@
     	<div class="sidebar-wrapper">
             <div class="logo">
                 <a href="http://www.creative-tim.com" class="simple-text">
-                    Creative Tim
+                    EmoDASH
                 </a>
             </div>
 
@@ -65,18 +65,7 @@
                         <p>Table List</p>
                     </a>
                 </li>
-                <li>
-                    <a href="typography.html">
-                        <i class="pe-7s-news-paper"></i>
-                        <p>Typography</p>
-                    </a>
-                </li>
-                <li>
-                    <a href="icons.html">
-                        <i class="pe-7s-science"></i>
-                        <p>Icons</p>
-                    </a>
-                </li>
+               
                 <li class="active">
                     <a href="maps.html">
                         <i class="pe-7s-map-marker"></i>
@@ -89,12 +78,7 @@
                         <p>Notifications</p>
                     </a>
                 </li>
-				<li class="active-pro">
-                    <a href="upgrade.html">
-                        <i class="pe-7s-rocket"></i>
-                        <p>Upgrade to PRO</p>
-                    </a>
-                </li>
+				
             </ul>
     	</div>
     </div>
@@ -170,7 +154,7 @@
             </div>
         </nav>
 
-        <div id="map"></div>
+        <div id="map" class="map"></div>
 
     </div>
 </div>
@@ -200,9 +184,26 @@
 	<!-- Light Bootstrap Table DEMO methods, don't include it in your project! -->
 	<script src="assets/js/demo.js"></script>
 
+	 <link rel="stylesheet" href="https://openlayers.org/en/v4.2.0/css/ol.css" type="text/css">
+   
+    <style>
+      .map {
+        height: 400px;
+        width: 100%;
+      }
+    </style>
+    <script src="http://www.openlayers.org/api/OpenLayers.js"></script>
+	<script src="assets/js/maps_function.js"></script>
+	
+
+
     <script>
         $().ready(function(){
-            demo.initGoogleMaps();
+        
+        	maps_obj.initMapMarkers();
+        
+        
+            //demo.initGoogleMaps();
         });
     </script>
 

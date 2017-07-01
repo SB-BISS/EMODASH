@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.LinkedList;
 
 import org.json.JSONObject;
@@ -49,7 +50,7 @@ public class DataBaseWebService {
 		LinkedList<String> customerids = new LinkedList<String>();
 		
 	   //singleton
-	   EmodashQueries qr= 	EmodashQueries.getEmodashQueryDb();
+	   EmodashQueries qr=  new	EmodashQueries();
 		
 		//json return
 		
@@ -69,25 +70,134 @@ public class DataBaseWebService {
 		Gson gson = new Gson();
 		
 		String sendids = gson.toJson(customerids);
-		System.out.println("IDS" + sendids);
 		
+		try {
+			set.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		qr.connectionClose();
 		return sendids;
 		
 		//register here
 		
 	}
 	
+	/**
+	 * 
+	 * This has to be created before each session begins. A session represent
+	 * the act of starting a call with an agent.
+	 * 
+	 * 
+	 * 
+	 * @param SessionID
+	 * @param AgentID
+	 * @param CustomerID
+	 */
+
+	@GetMapping("/create_call")
+	public void create_call(@RequestParam("call_id") String CallID, @RequestParam("agent_id") String AgentID, @RequestParam("customer_id") String CustomerID){
+		
+			
+		   System.err.println("CREATING CALL!");
+		   EmodashQueries qr= new EmodashQueries();
+		   
+		   long timestamp_beginning = System.currentTimeMillis();
+		   
+		   qr.insertCallId(CallID, AgentID, CustomerID, timestamp_beginning);
+		
+		   qr.connectionClose();
+		
+	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+	/**
+	 * 
+	 * This has to be created before each session begins. A session represent
+	 * the act of starting a call with an agent.
+	 * 
+	 * 
+	 * 
+	 * @param SessionID
+	 * @param AgentID
+	 * @param CustomerID
+	 */
+
+	@GetMapping("/end_call")
+	public void end_call(@RequestParam("call_id") String CallID, @RequestParam("agent_id") String AgentID, @RequestParam("customer_id") String CustomerID){
+		
+			
+		   System.err.println("Ending CALL!");
+		   EmodashQueries qr= new	EmodashQueries();
+		   
+		   long timestamp_end = System.currentTimeMillis();
+		   
+		   qr.endCallId(CallID, AgentID, CustomerID, timestamp_end);
+		
+		   ResultSet setCustomer =qr.emodashQuery(" select emotions.emotiontype, sum(value) as totalvalue from emotions, voicesignals where emotions.streamid=voicesignals.streamid and voicesignals.personid = '"+ CustomerID+ "' group by emotiontype;");
+		   ResultSet setAgent =qr.emodashQuery(" select emotions.emotiontype, sum(value) as totalvalue from emotions, voicesignals where emotions.streamid=voicesignals.streamid and voicesignals.personid = '"+ AgentID+ "' group by emotiontype;");
+
+		   
+		   
+		   float total_customer = 0;
+		   float total_agent = 0;
+		   
+		   HashMap<String,Float> map_customer = new HashMap<String,Float>();
+
+		   HashMap<String,Float> map_agent = new HashMap<String,Float>();
+		   
+		   try {
+			while(setCustomer.next()){
+				   
+				String label=  setCustomer.getString("emotiontype");
+				float value = setCustomer.getFloat("totalvalue");
+				
+				total_customer += value;
+				map_customer.put(label, value);
+				   
+			   }
+			while(setAgent.next()){
+				   
+				String label=  setAgent.getString("emotiontype");
+				float value = setAgent.getFloat("totalvalue");
+				
+				total_agent += value;
+				map_agent.put(label, value);
+				   
+			   }
+			
+			
+			
+		   } catch (SQLException e) {
+			   // TODO Auto-generated catch block
+			   e.printStackTrace();
+		   }
+		   
+		   
+		   float percentage_anger_customer = map_customer.get("anger")/total_customer;
+		   float percentage_disgust_customer = map_customer.get("disgust")/total_customer;
+		   float percentage_fear_customer = map_customer.get("fear")/total_customer;
+		   float percentage_happiness_customer = map_customer.get("happiness")/total_customer;
+		   float percentage_neutral_customer = map_customer.get("neutral")/total_customer;
+		   float percentage_sadness_customer = map_customer.get("sadness")/total_customer;
+		   float percentage_surprise_customer = map_customer.get("surprise")/total_customer;
+		   
+		   float percentage_anger_agent = map_agent.get("anger")/total_agent;
+		   float percentage_disgust_agent = map_agent.get("disgust")/total_agent;
+		   float percentage_fear_agent = map_agent.get("fear")/total_agent;
+		   float percentage_happiness_agent = map_agent.get("happiness")/total_agent;
+		   float percentage_neutral_agent = map_agent.get("neutral")/total_agent;
+		   float percentage_sadness_agent = map_agent.get("sadness")/total_agent;
+		   float percentage_surprise_agent = map_agent.get("surprise")/total_agent;
+		   
+		   
+		   qr.emodashUpdate("insert into emotion_history (CustomerId, CallId, anger_percentage, disgust_percentage,fear_percentage,happiness_percentage,neutral_percentage,sadness_percentage,surprise_percentage) "
+		   		+ "values('"+CustomerID +"','" + CallID+"'," + percentage_anger_customer + "," + percentage_disgust_customer+ "," + percentage_fear_customer + "," +percentage_happiness_customer + ","+percentage_neutral_customer+","+percentage_sadness_customer+","+ percentage_surprise_customer+ ");");
+		   qr.emodashUpdate("insert into emotion_history (CustomerId, CallId, anger_percentage, disgust_percentage,fear_percentage,happiness_percentage,neutral_percentage,sadness_percentage,surprise_percentage) "
+		   		+ "values('"+AgentID +"','" + CallID+"'," + percentage_anger_agent + "," + percentage_disgust_agent+ "," + percentage_fear_agent + "," +percentage_happiness_agent + ","+percentage_neutral_agent+","+percentage_sadness_agent+","+ percentage_surprise_agent + ");");
+
+		   qr.connectionClose();
+	}
 	
 	
 	
@@ -108,33 +218,41 @@ public class DataBaseWebService {
 	 */
 	
 	
-	@GetMapping("/get_session_id_with_customer")
+	@GetMapping("/get_call_id_with_customer")
 	public String get_session_id_with_customer(@RequestParam("agent_id") String agent_id, @RequestParam("customer_id") String customer_id){
 		
 		
 	   //singleton
-	   EmodashQueries qr= 	EmodashQueries.getEmodashQueryDb();
+	   EmodashQueries qr= new 	EmodashQueries();
 		
 		//json return
 		
 		// select the last call id
 	   
-		ResultSet set = qr.emodashQuery("Select phonecall.CallId, max(phonecall.timestamp_beginning) from phonecall "
-				+ "where phonecall.AgentId = '" + agent_id + "' , phonecall.CustomerId = '"+customer_id+"'" 
-				+ "Group by phonecall.Callid;"); //it should only give me a result
+		ResultSet set = qr.emodashQuery("Select phonecall.CallId, phonecall.timestamp_beginning from phonecall "
+				+ "where phonecall.AgentId = '" + agent_id + "' and phonecall.CustomerId = '"+customer_id+"' order by phonecall.timestamp_beginning DESC limit 1" 
+				+ ";"); //it should only give me a result
 		
-		
-		String callid=null;
+			String callid=null;
 		try {
-			callid = set.getString(0);
+			
+			//I want the first one if it is there.
+			if(set.next());
+			else return null;
+			
+			callid = set.getString("CallId");
 			set.close();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
+		Gson gson = new Gson();
+		HashMap<String, String> map = new HashMap<String,String>();
 		
-		return callid;
+		map.put("call_id", callid);
+		qr.connectionClose();
+		return gson.toJson(map);
 		
 		//register here
 		
@@ -142,14 +260,14 @@ public class DataBaseWebService {
 	
 	
 
-	@GetMapping("/get_session_id_no_customer")
+	@GetMapping("/get_call_id_no_customer")
 	public String get_session_id_no_customer(@RequestParam("agent_id") String agent_id){
 		
 		//json return
 		
 		
 		   //singleton
-		   EmodashQueries qr= 	EmodashQueries.getEmodashQueryDb();
+		   EmodashQueries qr=  new	EmodashQueries();
 			
 			//json return
 			
@@ -175,7 +293,7 @@ public class DataBaseWebService {
 				e.printStackTrace();
 			}
 			
-			
+			qr.connectionClose();
 			return callid;
 			
 			//register here
@@ -212,7 +330,7 @@ public class DataBaseWebService {
 	private AnagraphicData sql_query(String customer_id) {
 		// TODO Auto-generated method stub
 		
-		EmodashQueries qr= 	EmodashQueries.getEmodashQueryDb();
+		EmodashQueries qr= new	EmodashQueries();
 
 		ResultSet set = qr.emodashQuery("Select * from customer where customer.customerId='"+ customer_id +"';");
 		
@@ -244,8 +362,9 @@ public class DataBaseWebService {
 			datapojo.setAddress(Address);
 			datapojo.setSurname(Surname);
 			datapojo.setRegion(Region);
-			set.close();
-			
+		
+			set.close(); //CLOSE
+			qr.connectionClose();
 			return datapojo;
 			
 		} catch (SQLException e) {
@@ -256,60 +375,108 @@ public class DataBaseWebService {
 		return null;
 	}
 
-
-
-	@GetMapping("/customer_emotions_live")
-	public String customer_emotions(@RequestParam("customer_id") String customer_id, @RequestParam("call_id") String session_id){
+	
+	
+	
+	@GetMapping("/customer_lastcall")
+	public String customer_lastcall_emotions(@RequestParam("customer_id") String customer_id){
 		
-		EmodashQueries qr= 	EmodashQueries.getEmodashQueryDb();
-
-		ResultSet set = qr.emodashQuery("Select * from Emotions where Emotions.customerId='"+ customer_id +"', Emotions.callId = '" +session_id+ "' order by Timestamp desc limit 60;");
+		EmodashQueries qr= 	new EmodashQueries();
+		ResultSet set= qr.emodashQuery("Select "
+				+ "anger_percentage ,"
+				+ "disgust_percentage ,"
+				+ "fear_percentage, "
+				+ "happiness_percentage ,"
+				+ "neutral_percentage , "
+				+ "sadness_percentage , "
+				+ "surprise_percentage, "
+				+ "max(phonecall.timestamp_end)"  +
+		" from emotion_history, phonecall "
+		+ "where emotion_history.customerId='"+ customer_id +"' and "
+				+ "phonecall.callid = emotion_history.callid"
+				+ " group by timestamp_end;");
 		
-		LinkedList<SingleEmotion> emotionList = new LinkedList<SingleEmotion>();
+		HashMap<String,Float> fl = new HashMap<String,Float>();
 		
 		try {
-			if(set.getFetchSize()==0){
+			while(set.next()){
 				
-				
-				return "[]";
-				
-			}else{
-				
-				
-				while(set.next()){
-					
-					
-				   String type= set.getString("EmotionType");
-				   float value = set.getFloat("Value");
-					
-				   SingleEmotion emo= new SingleEmotion(type,value);
-				   //
-				   emotionList.addFirst(emo);
-				   
-				   
-				}
-				
-				
-				Gson gs = new Gson();
-				gs.toJson(emotionList);
-				
-				return emotionList.toString();
+				fl.put("anger",set.getFloat("anger_percentage"));
+				fl.put("disgust",set.getFloat("disgust_percentage"));
+				fl.put("fear",set.getFloat("fear_percentage"));
+				fl.put("happiness",set.getFloat("happiness_percentage"));
+				fl.put("neutral",set.getFloat("neutral_percentage"));
+				fl.put("sadness",set.getFloat("sadness_percentage"));
+				fl.put("surprise",set.getFloat("surprise_percentage"));
 				
 			}
-			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
-		//Again json list of emotions
-		//query to db here.
+		Gson gson = new Gson();
 		
-		//The list should have: session id
-		//Current Emotions ordered in time,
-		//Just the last one !
+		String tosubmit = gson.toJson(fl);
+		qr.connectionClose();
+		return tosubmit;
+	}
+	
+	
+	/**
+	 * Redirection with different paramters to the method above.
+	 * @param agent_id
+	 * @return
+	 */
+
+	@GetMapping("/agent_lastcall")
+	public String agent_lastcall_emotions(@RequestParam("agent_id") String agent_id){
 		
-		return "[]";
+		
+		return customer_lastcall_emotions(agent_id);
+	}
+	
+	
+	
+	
+	
+
+
+	@GetMapping("/customer_emotions_live")
+	public String customer_emotions(@RequestParam("customer_id") String customer_id, @RequestParam("call_id") String call_id){
+		
+		EmodashQueries qr= 	new EmodashQueries();
+
+		ResultSet set = qr.emodashQuery("Select emotiontype,value from Emotions, voicesignals where Emotions.StreamId=voicesignals.StreamId and voicesignals.PersonId='"+ customer_id +"' and Emotions.callId = '" +call_id+ "' order by Timestamp desc limit 70;");
+		
+		
+		LinkedList<SingleEmotion> emotionList = new LinkedList<SingleEmotion>();
+		
+		try {
+						
+				while(set.next()){
+					
+					
+				   String type= set.getString("EmotionType"); // to be shown by type
+				   float value = set.getFloat("Value");
+					
+				   SingleEmotion emo= new SingleEmotion(type,value);
+				   //
+				   emotionList.addFirst(emo);
+				  
+				}
+				
+				set.close(); // CLOSE
+				qr.connectionClose();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		Gson gs = new Gson();
+		String emotionsJsonList= gs.toJson(emotionList);
+		
+		return emotionsJsonList;
 		
 		//register here
 		
@@ -319,7 +486,11 @@ public class DataBaseWebService {
 	@GetMapping("/agent_emotions_live")
 	public String agent_emotions(@RequestParam("agent_id") String agent_id, @RequestParam("call_id") String session_id){
 		
-		EmodashQueries qr= 	EmodashQueries.getEmodashQueryDb();
+		String agent_em = customer_emotions(agent_id,session_id);
+		System.err.println(agent_em);
+		return agent_em;
+		
+		/*EmodashQueries qr= 	EmodashQueries.getEmodashQueryDb();
 
 		ResultSet set = qr.emodashQuery("Select * from Emotions where Emotions.customerId='"+ agent_id +"', Emotions.callId = '" +session_id+ "' order by Timestamp desc limit 60;");
 		
@@ -348,6 +519,8 @@ public class DataBaseWebService {
 				}
 				
 				
+				set.close();//CLOSE
+				
 				Gson gs = new Gson();
 				gs.toJson(emotionList);
 				
@@ -370,9 +543,8 @@ public class DataBaseWebService {
 		return "[]";
 		
 		//register here
-		
+		*/
 	}
-	
 	
 
 }

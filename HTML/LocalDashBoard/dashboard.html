@@ -167,46 +167,53 @@
                                 <p class="category">Last Call Performance</p>
                             </div>
                             <div class="content">
-                                <div id="chartPreferencesCustomer" class="ct-chart ct-perfect-fourth"></div>
+                                <div id="chartPreferencesCustomer">
+                                <canvas id="CustomerChart" width="100" height="70"></canvas>
+                                </div>
 
                                 <div class="footer">
-                                     <div class="legend">
-                                        <i class="fa fa-circle" style="color: red"></i> Anger
-                                        <i class="fa fa-circle" style="color: purple"></i> Disgust
-                                        <i class="fa fa-circle" style="color: green"></i> Fear
-                                        <i class="fa fa-circle" style="color: cyan"></i> Happiness
-                                        <i class="fa fa-circle" style="color: gray"></i> Neutral
-                                        <i class="fa fa-circle" style="color: blue"></i> Sadness
-                                        <i class="fa fa-circle" style="color: orange"></i> Surprise
+                                      <div class="legend">
+                                        <i class="fa fa-circle" style="color: #ff0000"></i> Anger
+                                        <i class="fa fa-circle" style="color: #ffa500"></i> Surprise
+                                        <i class="fa fa-circle" style="color: #00FFFF"></i> Happiness
+                                        <i class="fa fa-circle" style="color: #c8c8c8"></i> Neutral
+                                        <i class="fa fa-circle" style="color: #0000FF"></i> Sadness
+										 <i class="fa fa-circle" style="color: #00FF00"></i> Fear
+                                        <i class="fa fa-circle" style="color: #ff00ff"></i> Disgust
                                     </div>
                                     <hr>
                                     <div class="stats">
-                                        <i class="fa fa-clock-o"></i> Information about Last 30 interactions
+                                        <i class="fa fa-clock-o"></i> Information about Last Interaction
+                                       
                                     </div>
                                 </div>
                             </div>
                         </div>
+                       
                         <div class="card">
                             <div class="header">
                                 <h4 class="title">Agent Emotion Statistics</h4>
                                 <p class="category">Last Call Performance</p>
                             </div>
                             <div class="content">
-                                <div id="chartPreferencesAgent" class="ct-chart ct-perfect-fourth"></div>
+                                <div id="chartPreferencesAgent">
+                                 <canvas id="AgentChart" width="100" height="70"></canvas>
+                                 </div>
+                                
 
                                 <div class="footer">
-                                     <div class="legend">
-                                        <i class="fa fa-circle" style="color: red"></i> Anger
-                                        <i class="fa fa-circle" style="color: purple"></i> Disgust
-                                        <i class="fa fa-circle" style="color: green"></i> Fear
-                                        <i class="fa fa-circle" style="color: cyan"></i> Happiness
-                                        <i class="fa fa-circle" style="color: gray"></i> Neutral
-                                        <i class="fa fa-circle" style="color: blue"></i> Sadness
-                                        <i class="fa fa-circle" style="color: orange"></i> Surprise
+                                      <div class="legend">
+                                        <i class="fa fa-circle" style="color: #ff0000"></i> Anger
+                                        <i class="fa fa-circle" style="color: #ffa500"></i> Surprise
+                                        <i class="fa fa-circle" style="color: #00FFFF"></i> Happiness
+                                        <i class="fa fa-circle" style="color: #c8c8c8"></i> Neutral
+                                        <i class="fa fa-circle" style="color: #0000FF"></i> Sadness
+										 <i class="fa fa-circle" style="color: #00FF00"></i> Fear
+                                        <i class="fa fa-circle" style="color: #ff00ff"></i> Disgust
                                     </div>
                                     <hr>
                                     <div class="stats">
-                                        <i class="fa fa-clock-o"></i> Information about Last 30 interactions
+                                        <i class="fa fa-clock-o"></i> Information about Last interaction
                                     </div>
                                 </div>
                             </div>
@@ -225,20 +232,22 @@
                                 <p class="category">Current Performance</p>
                             </div>
                             <div class="content">
-                                <div id="chartEmotionsCustomer" class="ct-chart"></div>
+                                <div id="chartEmotionscustomer" class="ct-chart"></div>
                                 <div class="footer">
                                       <div class="legend">
-                                        <i class="fa fa-circle" style="color: red"></i> Anger
-                                        <i class="fa fa-circle" style="color: purple"></i> Disgust
-                                        <i class="fa fa-circle" style="color: green"></i> Fear
-                                        <i class="fa fa-circle" style="color: cyan"></i> Happiness
-                                        <i class="fa fa-circle" style="color: gray"></i> Neutral
-                                        <i class="fa fa-circle" style="color: blue"></i> Sadness
-                                        <i class="fa fa-circle" style="color: orange"></i> Surprise
+                                        <i class="fa fa-circle" style="color: #ff0000"></i> Anger
+                                        <i class="fa fa-circle" style="color: #ffa500"></i> Surprise
+                                        <i class="fa fa-circle" style="color: #00FFFF"></i> Happiness
+                                        <i class="fa fa-circle" style="color: #c8c8c8"></i> Neutral
+                                        <i class="fa fa-circle" style="color: #0000FF"></i> Sadness
+										 <i class="fa fa-circle" style="color: #00FF00"></i> Fear
+                                        <i class="fa fa-circle" style="color: #ff00ff"></i> Disgust
                                     </div>
                                     <hr>
                                     <div class="stats">
-                                        <i class="fa fa-history"></i> This displays 1 minute of interaction (20 points)
+                                        <i class="fa fa-history"></i> This displays 1 minute of interaction (20 points)<br>
+                                         <a href="print.html" class="btn btn-primary btn-lg" onclick="window.open('widget_customer.html', 'newwindow', 'width=300,height=300,toolbar=yes'); return false;"> EMODASH WIDGET</a>
+		          
                                     </div>
                                 </div>
                             </div>
@@ -253,20 +262,22 @@
                                 <p class="category">Current Performance</p>
                             </div>
                             <div class="content">
-                                <div id="chartEmotionsAgent" class="ct-chart"></div>
+                                <div id="chartEmotionsagent" class="ct-chart"></div>
                                 <div class="footer">
-                                     <div class="legend">
-                                        <i class="fa fa-circle" style="color: red"></i> Anger
-                                        <i class="fa fa-circle" style="color: purple"></i> Disgust
-                                        <i class="fa fa-circle" style="color: green"></i> Fear
-                                        <i class="fa fa-circle" style="color: cyan"></i> Happiness
-                                        <i class="fa fa-circle" style="color: gray"></i> Neutral
-                                        <i class="fa fa-circle" style="color: blue"></i> Sadness
-                                        <i class="fa fa-circle" style="color: orange"></i> Surprise
+                                      <div class="legend">
+                                        <i class="fa fa-circle" style="color: #ff0000"></i> Anger
+                                        <i class="fa fa-circle" style="color: #ffa500"></i> Surprise
+                                        <i class="fa fa-circle" style="color: #00FFFF"></i> Happiness
+                                        <i class="fa fa-circle" style="color: #c8c8c8"></i> Neutral
+                                        <i class="fa fa-circle" style="color: #0000FF"></i> Sadness
+										 <i class="fa fa-circle" style="color: #00FF00"></i> Fear
+                                        <i class="fa fa-circle" style="color: #ff00ff"></i> Disgust
                                     </div>
                                     <hr>
                                     <div class="stats">
-                                        <i class="fa fa-history"></i> This displays 1 minute of interaction (20 points)
+                                        <i class="fa fa-history"></i> This displays 1 minute of interaction (20 points)<br>
+                                        <a href="print.html" class="btn btn-primary btn-lg" onclick="window.open('widget_agent.html', 'newwindow', 'width=300,height=300'); return false;"> EMODASH WIDGET</a>
+		          
                                     </div>
                                 </div>
                             </div>
@@ -489,13 +500,34 @@
 	<!-- Light Bootstrap Table DEMO methods, don't include it in your project! -->
 	<script src="assets/js/demo.js"></script>
 	
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.bundle.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.js"></script>
+	
+	
+	
 	<!--Anagraphic Data Caller -->
 	<script src="assets/js/anagraphic.js"></script>
 
+		
+	
+	<!--pie charts -->
+	<script src="assets/js/pie_charts.js"></script>
+	
+
+	
+
 	<script type="text/javascript">
+	
+	
+	
+	
     	$(document).ready(function(){
 
         	demo.initChartist();
+        	pie_charts.initPieCharts();
+        	pie_charts.initActiveCharts("customer");
+        	pie_charts.initActiveCharts("agent");
 
         	$.notify({
             	icon: 'pe-7s-gift',

@@ -8,7 +8,7 @@
   <meta content="width=device-width,initial-scale=1" name=viewport>
   <link href={{ url_for('static', filename='images/techruption.ico')  }} rel="icon" >
   <link href={{ url_for('static', filename='css/bootstrap.min.css')  }} rel="stylesheet">
-  <link href={{  url_for('static', filename='css/starter-template2.css')  }} rel="stylesheet">
+  <link href={{  url_for('static', filename='css/starter-template.css')  }} rel="stylesheet">
   <!--stylesheet. The url_for is a Flask function to find the url for a standard folder. Then, within the static folder you'll want to look for the css folder ccontaining the
   bootstrap min file.-->
 
@@ -41,28 +41,23 @@
       </div>
     </nav>
 
-    <div class="starter-template">
-            <h1>Uploading Files</h1>
-            <p class="lead">Select the files you want to annotate and upload them.
-              <form action="upload" method="post" enctype="multipart/form-data">
-                <input size="60" type="file" name="file"> <br>
-                <input type="submit" value="Upload">
-              </form>
-          </p>
+    <div>
 
-            <h1>Splitting Files</h1>
-            <p class ="lead">
-              Press the split files button to split all uploaded files in 3-second windows.
-              <br>
-              <br>
-              <button type="button" class="btn btn-default">
-                <a href={{ url_for('split') }} name="dlbutton">split files</a>
-              </button>
-            </p>
-
+          <form action="upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="file"><br /><br />
+            <input type="submit" value="Upload">
+          </form>
 
     </div>
+    <a href="{{ url_for('split') }}" name="dlbutton">split files</a>
+    <div class="starter-template">
 
+      <h1>Upload your file</h1>
+      <p class="lead">
+
+      </p>
+
+    </div>
 
 
 

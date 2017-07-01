@@ -17,11 +17,12 @@ anagraphic = {
 						document.getElementById('name').value = name
 						
 						surname = myObj['surname']
-						
+						age = myObj['age']
+						             
 						document.getElementById('surname').value = surname
 						                
 						document.getElementById('user_name').value 	= name + " " +surname      
-						document.getElementById('user_name2').value = name + " " +surname            
+						document.getElementById('user_name2').innerHTML = name + " " +surname + ", " + age + " years old"            
 						
 					    address = myObj['address']
 
@@ -29,9 +30,6 @@ anagraphic = {
 					    
 					    //document.getElementById('Company').value = 'ABP'
 					    
-					    age = myObj['age']
-					    
-					    document.getElementById('age').value = age
 					                
 					    postal_code = myObj['postalCode']
 					                        

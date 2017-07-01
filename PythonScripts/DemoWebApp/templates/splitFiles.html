@@ -16,7 +16,7 @@
 
 </head>
 <body>
-  <nav class="navbar navbar-inverse navbar-fixed-top">
+   <nav class="navbar navbar-inverse navbar-fixed-top">
 
       <div class="container">
 
@@ -34,8 +34,8 @@
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
             <li><a href="/instructions">Instructions</a></li>
-            <li><a href="/splitFiles">Split Files</a></li>
-            <li><a href="/audioAnnotation">Audio Annotation</a></li>
+            <li><a href="/splitFiles">Upload Files</a></li>
+            <li><a href="/PlayFiles">Play Files</a></li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
@@ -43,26 +43,26 @@
 
     <div class="starter-template">
             <h1>Uploading Files</h1>
-            <p class="lead">Select the files you want to annotate and upload them.
-              <form action="upload" method="post" enctype="multipart/form-data">
+            <p class="lead">Select the Caller Agent Speech Files you want to annotate and upload them.
+              <form action="upload_agent" method="post" enctype="multipart/form-data">
                 <input size="60" type="file" name="file"> <br>
                 <input type="submit" value="Upload">
               </form>
           </p>
 
-            <h1>Splitting Files</h1>
-            <p class ="lead">
-              Press the split files button to split all uploaded files in 3-second windows.
-              <br>
-              <br>
-              <button type="button" class="btn btn-default">
-                <a href={{ url_for('split') }} name="dlbutton">split files</a>
-              </button>
-            </p>
+    </div>
+
+ 	<div class="starter-template">
+            <h1>Uploading Files</h1>
+            <p class="lead">Select the Customer Speech Files you want to annotate and upload them.
+              <form action="upload_customer" method="post" enctype="multipart/form-data">
+                <input size="60" type="file" name="file"> <br>
+                <input type="submit" value="Upload">
+              </form>
+          </p>
 
 
     </div>
-
 
 
 
