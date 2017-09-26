@@ -8,3 +8,8 @@ a04.wav_window_1.wav
 a04.wav_window_2.wav
 a05.wav_window_1.wav
 a05.wav_window_2.wav
+a11.wav_window_1.wav
+d02.wav_window_1.wav
+d02.wav_window_2.wav
+h05.wav_window_1.wav
+h05.wav_window_2.wav

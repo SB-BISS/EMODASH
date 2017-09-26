@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+  <meta charset=utf-8>
+  <title>EmoDash Annotation</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <!--to encourage the browser to use fullscreen-->
+  <meta content="width=device-width,initial-scale=1" name=viewport>
+  <link href={{ url_for('static', filename='images/techruption.ico')  }} rel="icon" >
+  <link href={{ url_for('static', filename='css/bootstrap.min.css')  }} rel="stylesheet">
+  <link href={{  url_for('static', filename='css/starter-template.css')  }} rel="stylesheet">
+  <!--stylesheet. The url_for is a Flask function to find the url for a standard folder. Then, within the static folder you'll want to look for the css folder ccontaining the
+  bootstrap min file.-->
+
+
+
+</head>
+<body>
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+
+      <div class="container">
+
+        <div class="navbar-header">
+
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+
+          <a class="navbar-brand" href="/">EmoDash Annotation</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="/instructions">Instructions</a></li>
+            <li><a href="/splitFiles">Split Files</a></li>
+            <li><a href="/audioAnnotation">Audio Annotation</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="starter-template">
+            <h1>Welcome to the annotation application for EmoDash!</h1>
+            <p class="lead">This application enables you to annotate emotions in audio files.
+            <br>
+            Before you start annotating, make sure to check out the instructions.
+            <br>
+            Thank you for your effort!
+          </p>
+          <p>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <img style="top:100px;left:100px" src="{{  url_for('static', filename='images/techruption.png')  }}">
+          </p>
+    </div>
+
+
+
+</body>
+
+
+
+
+
+</html>
