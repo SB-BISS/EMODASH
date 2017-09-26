@@ -155,6 +155,39 @@ body,
   position: relative;
 }
 
+
+.neutral_color {
+  fill: #C8C8C8;
+}
+
+
+.surprise_color {
+  fill: #ffc04c;
+}
+
+
+.anger_color {
+  fill: #FF0000;
+}
+
+
+.happiness_color {
+  fill: #00FFFF;
+}
+
+.fear_color {
+  fill: #00FF00;
+}
+
+.sadness_color {
+  fill: #0000FF;
+}
+
+.disgust_color {
+  fill: #FF00FF;
+}
+
+
 a {
   color: #1DC7EA;
 }
@@ -1959,8 +1992,8 @@ body > .navbar-collapse[data-color="purple"]:after {
   position: absolute;
 }
 .card .ct-chart {
-  margin: 30px 0 30px;
-  height: 245px;
+  margin: 15px 0 15px;
+  height: 180px;
 }
 .card .table tbody td:first-child,
 .card .table thead th:first-child {
@@ -2203,53 +2236,54 @@ body > .navbar-collapse[data-color="purple"]:after {
   stroke-width: 60px;
 }
 
+
 .ct-series-a .ct-point, .ct-series-a .ct-line, .ct-series-a .ct-bar, .ct-series-a .ct-slice-donut {
-  stroke: #1DC7EA;
+  stroke: #FF0000;
 }
 .ct-series-a .ct-slice-pie, .ct-series-a .ct-area {
-  fill: #1DC7EA;
+  fill: #FF0000;
 }
 
 .ct-series-b .ct-point, .ct-series-b .ct-line, .ct-series-b .ct-bar, .ct-series-b .ct-slice-donut {
-  stroke: #FB404B;
+  stroke: #ffa500;
 }
 .ct-series-b .ct-slice-pie, .ct-series-b .ct-area {
-  fill: #FB404B;
+  fill: #ffa500;
 }
 
 .ct-series-c .ct-point, .ct-series-c .ct-line, .ct-series-c .ct-bar, .ct-series-c .ct-slice-donut {
-  stroke: #FFA534;
+  stroke: #00FFFF;
 }
 .ct-series-c .ct-slice-pie, .ct-series-c .ct-area {
-  fill: #FFA534;
+  fill: #00FFFF;
 }
 
 .ct-series-d .ct-point, .ct-series-d .ct-line, .ct-series-d .ct-bar, .ct-series-d .ct-slice-donut {
-  stroke: #9368E9;
+  stroke: #C8C8C8;
 }
 .ct-series-d .ct-slice-pie, .ct-series-d .ct-area {
-  fill: #9368E9;
+  fill: #C8C8C8;
 }
 
 .ct-series-e .ct-point, .ct-series-e .ct-line, .ct-series-e .ct-bar, .ct-series-e .ct-slice-donut {
-  stroke: #87CB16;
+  stroke: #0000FF;
 }
 .ct-series-e .ct-slice-pie, .ct-series-e .ct-area {
-  fill: #87CB16;
+  fill: #0000FF;
 }
 
 .ct-series-f .ct-point, .ct-series-f .ct-line, .ct-series-f .ct-bar, .ct-series-f .ct-slice-donut {
-  stroke: #1F77D0;
+  stroke: #00FF00;
 }
 .ct-series-f .ct-slice-pie, .ct-series-f .ct-area {
-  fill: #1F77D0;
+  fill: #00FF00;
 }
 
 .ct-series-g .ct-point, .ct-series-g .ct-line, .ct-series-g .ct-bar, .ct-series-g .ct-slice-donut {
-  stroke: #5e5e5e;
+  stroke: #ff00ff;
 }
 .ct-series-g .ct-slice-pie, .ct-series-g .ct-area {
-  fill: #5e5e5e;
+  fill: #ff00ff;
 }
 
 .ct-series-h .ct-point, .ct-series-h .ct-line, .ct-series-h .ct-bar, .ct-series-h .ct-slice-donut {
