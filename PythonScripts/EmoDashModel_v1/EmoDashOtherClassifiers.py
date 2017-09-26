@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 
 seed = 7
 np.random.seed(seed)
-############################################ssh emodash@40.74.244.144
+############################################
 features_complete = np.empty((0,34))
 labels_complete = np.empty((0,))
 

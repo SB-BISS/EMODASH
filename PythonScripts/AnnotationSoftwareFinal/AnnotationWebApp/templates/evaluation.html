@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+  <meta charset=utf-8>
+  <title>EmoDash Annotation</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <!--to encourage the browser to use fullscreen-->
+  <meta content="width=device-width,initial-scale=1" name=viewport>
+  <link href={{ url_for('static', filename='images/techruption.ico')  }} rel="icon" >
+  <link href={{ url_for('static', filename='css/bootstrap.min.css')  }} rel="stylesheet">
+  <link href={{  url_for('static', filename='css/starter-template2.css')  }} rel="stylesheet">
+  <!--stylesheet. The url_for is a Flask function to find the url for a standard folder. Then, within the static folder you'll want to look for the css folder ccontaining the
+  bootstrap min file.-->
+
+
+
+</head>
+<body>
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+
+      <div class="container">
+
+        <div class="navbar-header">
+
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+
+          <a class="navbar-brand" href="/">EmoDash Annotation</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="/instructions">Instructions</a></li>
+            <li><a href="/splitFiles">Split Files</a></li>
+            <li><a href="/audioAnnotation">Audio Annotation</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+<p>{{filename}}</p>
+<br>
+<p>predicted emotion: {{prediction}}</p>
+<br>
+<form action="/submitForm" method="post">
+  <input type="radio" name="emotion" value="0">Angry</input>
+ <input type="radio" name="emotion" value="1">Disgust</input>
+ <input type="radio" name="emotion" value="2">Fear</input>
+ <input type="radio" name="emotion" value="3">Happiness</input>
+ <input type="radio" name="emotion" value="4">Neutral</input>
+ <input type="radio" name="emotion" value="5">Sadness</input>
+ <input type="radio" name="emotion" value="6">Surprise</input>
+ <input type="submit" value="Submit">
+</form>
+<br>
+
+    <audio controls autoplay>
+      <source src = "/static/Resources/windowDirectory/{{filename}}" type="audio/wav">
+        Your browser does not support this audio format.
+      </audio>
+
+
+
+</body>
+</html>
