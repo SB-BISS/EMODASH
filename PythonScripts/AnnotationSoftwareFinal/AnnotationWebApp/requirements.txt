@@ -1,0 +1,10 @@
+flask
+numpy
+pydub
+pyAudioAnalysis
+tensorflow
+keras
+pandas
+scikit-learn
+pathlib
+h5py
