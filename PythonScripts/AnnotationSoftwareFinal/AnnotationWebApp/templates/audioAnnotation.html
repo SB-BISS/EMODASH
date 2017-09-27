@@ -42,10 +42,21 @@
     </nav>
 
     <ul>
+
     {% for i in filenames %}
+	
+	<audio controls="controls">
+  	Your browser does not support the <code>audio</code> element.
+  	<source src="/static/windowDirectory/{{i}}" type="audio/wav">
+	</audio>
 
-    <li> <a href = {{  url_for("evaluation", filename = i)  }}> {{i}} </a></li>
 
+
+	<li> <a href = {{ url_for("evaluation", filename = i) }}> {{i}} </a></li>
+
+
+
+    
     {% endfor %}
 
   </ul>
