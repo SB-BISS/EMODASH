@@ -19,7 +19,9 @@ from pydub import AudioSegment
 
 ############SPLIT FILES FUNCTION##################
 def splitAudioFiles(raw_files_directory, window_storage_directory):
+        print 'Split Files'
         filenames = [name for name in os.listdir(raw_files_directory) if not name == '.DS_Store']
+        print 'Split Files 2'        
         for filename in filenames:
             audiofile = AudioSegment.from_wav(os.path.join(raw_files_directory,  filename))
             duration = audiofile.duration_seconds
@@ -66,14 +68,14 @@ def constructModel(filepath_model, filepath_weights):
 ############DEFINE WEB APP VARIABLES##################
 app = Flask(__name__)
 
-app.config['UPLOAD_FOLDER'] = '/app/static/Resources/uploads/'
-app.config['windowDirectory'] = '/app/static/Resources/windowDirectory/'
-app.config['LOG'] = "/app/static/Resources/EmoDashLog.txt"
-app.config['ANN_MODEL'] = "/app/static/Resources/EmoDashANN_model_v1.json"
-app.config['ANN_WEIGHTS'] = "/app/static/Resources/EmoDashANN_weights_v1.h5"
-app.config['SCALER'] = "/app/static/Resources/featuresScaled.pkl"
-app.config['OUTPUT_FEATURES'] = "/app/static/Resources/features.csv"
-app.config['OUTPUT_TARGETS'] = "/app/static/Resources/targets.csv"
+app.config['UPLOAD_FOLDER'] = './static/uploads/'
+app.config['windowDirectory'] = './static/windowDirectory/'
+app.config['LOG'] = "./Resources/EmoDashLog.txt"
+app.config['ANN_MODEL'] = "./Resources/EmoDashANN_model_v1.json"
+app.config['ANN_WEIGHTS'] = "./Resources/EmoDashANN_weights_v1.h5"
+app.config['SCALER'] = "./Resources/featuresScaled.pkl"
+app.config['OUTPUT_FEATURES'] = "./Resources/features.csv"
+app.config['OUTPUT_TARGETS'] = "./Resources/targets.csv"
 app.config['ALLOWED_EXTENSIONS'] = set(['wav'])
 app.config['SECRET_KEY']='#1993#EmoDashWebApp'
 
@@ -97,10 +99,11 @@ def allowed_file(filename):
 
 @app.route('/upload', methods=['POST'])
 def upload():
+    
     file = request.files['file']
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))   
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         return render_template("splitFiles.html")
 
 @app.route('/split')
@@ -111,7 +114,6 @@ def split():
 ############ANNOTATION##################
 @app.route('/audioAnnotation')
 def audioAnnotationPage():
-    
     with open(app.config["LOG"], "r") as log:
         logfile = log.read()
         log.close()
