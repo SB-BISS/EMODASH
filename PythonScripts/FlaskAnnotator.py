@@ -115,7 +115,7 @@ def upload_customer():
 
         
         #body='{"mode":"sync", "messageType":"46e86c250974adcc08f2", "messages":[{"Anger":prediction[0], "Disgust":prediction[1], "Fear":prediction[2], "Hapiness":prediction[3],"Neutral":prediction[4],  "Sadness":prediction[5], "Surprise":prediction[6] }]}'
-        body={"mode":"sync",  "messageType":"46e86c250974adcc08f2", "messages":[{"Anger":round(prediction[0][0],2), "Disgust":round(prediction[0][1],2), "Fear":round(prediction[0][2],2), "Hapiness":round(prediction[0][3],2),"Neutral":round(prediction[0][4],2),  "Sadness":round(prediction[0][5],2), "Surprise":round(prediction[0][6],2) }]}
+        body={"mode":"sync",  "messageType":"46e86c250974adcc08f2", "messages":[{"Anger":round(prediction[0][0],2), "Disgust":round(prediction[0][1],2), "Fear":round(prediction[0][2],2), "Happiness":round(prediction[0][3],2),"Neutral":round(prediction[0][4],2),  "Sadness":round(prediction[0][5],2), "Surprise":round(prediction[0][6],2) }]}
     
         print('CUSTOMER EMOTIONS')
         '''print(body)
