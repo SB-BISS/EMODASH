@@ -33,49 +33,111 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import pickle
 
+class FeatureExtractor:
 
-def __init__(self, filename_mean_sd):
-    # load weights
-    self.dictionary = pickle.load(open(filename_mean_sd, "rb"))
-    self.mean_train = self.dictionary.get("mean")
-    self.sd_train = self.dictionary.get("sd")
+    def __init__(self, filename_mean_sd, BIT_PRECISION=8):
+        # load weights
+        self.dictionary = pickle.load(open(filename_mean_sd, "rb"))
+        self.mean_train = self.dictionary.get("mean")
+        self.sd_train = self.dictionary.get("sd")
+        self.BIT_PRECISION=BIT_PRECISION
+
+    #Helper method
+    #assumption, we save a file somewhere.
+
+    def extract_features(self, file_path):
+
+        [Fs, x] = audioBasicIO.readAudioFile(file_path)
+        x= audioBasicIO.stereo2mono(x) #necessary conversion for pyaudio analysis
+        features = audioFeatureExtraction.stFeatureExtraction(x, Fs, 0.05*Fs, 0.025*Fs)
+        features = np.mean(features, axis=1)
+        features = np.asarray(features).reshape(len(features),-1).transpose()
+        #features_complete = np.append(features_complete, features, axis=0)
+        return features #_complete
+
+    def extract_features2(self, Fs, x):
+        x = audioBasicIO.stereo2mono(x)  # necessary conversion for pyaudio analysis
+        #print len(x)
+
+        # they must be 24k samples
+        #coef = int(np.floor(len(x)/48000))
+
+        #x = x[range(0,len(x),6)]
+        #print len(x)
+        # Fs=16000
+
+        features = audioFeatureExtraction.stFeatureExtraction(x, Fs, 0.05 * Fs, 0.025 * Fs)
+        if len(features) == 0:
+            features = np.zeros((34, 2))
+
+        features = np.mean(features, axis=1)
+        features = np.asarray(features).reshape(len(features), -1).transpose()
+        # features_complete = np.append(features_complete, features, axis=0)
+        return features  # _complete
 
 
-#Helper method
-#assumption, we save a file somewhere.
+    def extract_features3(self, Fs, x):
+        x = audioBasicIO.stereo2mono(x)  # necessary conversion for pyaudio analysis
 
-def extract_features(self, file_path):
+        # they must be 24k samples
+        #coef = int(np.floor(len(x)/48000))
 
-    [Fs, x] = audioBasicIO.readAudioFile(file_path)
-    x= audioBasicIO.stereo2mono(x) #necessary conversion for pyaudio analysis
-    features = audioFeatureExtraction.stFeatureExtraction(x, Fs, 0.05*Fs, 0.025*Fs)
-    features = np.mean(features, axis=1)
-    features = np.asarray(features).reshape(len(features),-1).transpose()
-    #features_complete = np.append(features_complete, features, axis=0)
-    return features #_complete
+        #x = x[range(0,len(x),6)]
+        #print len(x)
+        # Fs=16000
+
+        features = audioFeatureExtraction.stFeatureExtraction(x, Fs, 0.05 * Fs, 0.025 * Fs)
+        if len(features) == 0:
+            features = np.zeros((34, 119))
+
+        #features = np.mean(features, axis=1)
+        features = np.asarray(features).reshape(len(features), -1).transpose()
+        print len(features)
+        # features_complete = np.append(features_complete, features, axis=0)
+        return features  # _complete
 
 
-def split_song(self, song):
-    mydict = []
-    convers = []
-
-    for i in range(3000, len(song), 3000):
-        # print i
-        splitting = song[i - 3000:i]  # first three seconds
-        bit_depth = splitting.sample_width * 16
-        # print splitting.frame_rate
+    def split_song2(self,song,padding_length):
+        bit_depth = song.sample_width * self.BIT_PRECISION
         array_type = get_array_type(bit_depth)
-        numeric_array = array.array(array_type, splitting._data)
+        numeric_array = array.array(array_type, song._data)
         numeric_array = numeric_array.tolist()
-        features = self.extract_features2(splitting.frame_rate, np.asarray(numeric_array))[0]
-        features_transformed = (features - self.mean_train) / self.sd_train
-        convers.append(features_transformed)
-        #if len(convers) == 3:
-        #    prediction = self.my_attention_network.predict(np.array([convers]))[0]
-            # print prediction
-        #    mydict.append({"Anger": prediction[0], "Disgust": prediction[1], "Fear": prediction[3],
-        #                   "Happiness": prediction[5], "Neutral": prediction[6], "Sadness": prediction[2],
-        #                   "Surprise": prediction[4]})
-        #    convers.pop(0)
+        features = self.extract_features3(song.frame_rate, np.asarray(numeric_array))
+        #print("$$")
+        #print(len(features))
 
-    return convers
+        while len(features)<padding_length:
+            features=np.append(features,(np.zeros((1,34)))) #padding
+
+        if len(features)>padding_length:
+            features= features[len(features)-padding_length:len(features)]
+        #print(np.shape(features))
+
+        print(len(features))
+        #print("$$")
+        return features
+
+    def split_song(self, song):
+        mydict = []
+        convers = []
+
+        for i in range(3000, len(song)+3000, 3000):
+            # print i
+            splitting = song[i - 3000:i]  # first three seconds
+            bit_depth = splitting.sample_width * self.BIT_PRECISION
+            # print splitting.frame_rate
+            array_type = get_array_type(bit_depth)
+            numeric_array = array.array(array_type, splitting._data)
+            numeric_array = numeric_array.tolist()
+            features = self.extract_features2(splitting.frame_rate, np.asarray(numeric_array))[0]
+            features_transformed = (features - self.mean_train) / self.sd_train
+            convers.append(features_transformed)
+            #if len(convers) == 3:
+            #    prediction = self.my_attention_network.predict(np.array([convers]))[0]
+                # print prediction
+            #    mydict.append({"Anger": prediction[0], "Disgust": prediction[1], "Fear": prediction[3],
+            #                   "Happiness": prediction[5], "Neutral": prediction[6], "Sadness": prediction[2],
+            #                   "Surprise": prediction[4]})
+            #    convers.pop(0)
+
+        return convers

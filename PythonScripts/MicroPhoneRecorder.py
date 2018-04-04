@@ -1,5 +1,6 @@
-
+import traceback
 import sys
+import json
 from sys import byteorder
 from array import array
 from struct import pack
@@ -13,16 +14,20 @@ import os
 from pydub import AudioSegment
 import FeatureExtractor
 import requests
+import pandas as pd
+from collections import deque
 
 
 class MicroPhoneRecorder:
 
 
-    def __init__(self,Device = 1, Input = True, Channels = 1,  THRESHOLD = 500, CHUNK_SIZE = 1024, FORMAT = pyaudio.paInt16, RATE = 8000, RECORD_SECONDS = 3,WAVE_OUTPUT_FILENAME_EXTENSION = 0, EXPORT_FOLDER= "Recordings", WAVE_OUTPUT_FILENAME = "output", BASELINE = 'baseline_mean_sd.pickle'):
+    def __init__(self,Device = 1, Input = True, Channels = 1,  THRESHOLD = 500, CHUNK_SIZE = 1024, FORMAT = pyaudio.paInt16, RATE = 8000, RECORD_SECONDS = 3.25,WAVE_OUTPUT_FILENAME_EXTENSION = 0, EXPORT_FOLDER= "Recordings", WAVE_OUTPUT_FILENAME = "output", BASELINE = 'baseline_mean_sd.pickle', URL= "http://localhost:50000/annotate"):
 
+        self.myqueue= deque([])
         self.Input = Input
         self.Device = Device
         self.Channels=Channels
+        self.URL = URL
 
         if (Input==False):
             self.Output = True
@@ -111,7 +116,7 @@ class MicroPhoneRecorder:
 
         r = array('h')
         count = 0
-        for i in range(0, int(self.RATE / self.CHUNK_SIZE * self.RECORD_SECONDS)):
+        for i in range(0, int(self.RATE / self.CHUNK_SIZE * (self.RECORD_SECONDS))):
             count += 1
             # little endian, signed short
             snd_data = array('h', stream.read(self.CHUNK_SIZE))
@@ -144,7 +149,7 @@ class MicroPhoneRecorder:
             d = True
             print("starting")
             ts = time.time()
-            EXPORT_FOLDER = self.EXPORT_FOLDER + "_RECORDINGS_" + str(ts).split(".")[0]
+            EXPORT_FOLDER = self.EXPORT_FOLDER + "_RECORDINGS" #+ str(ts).split(".")[0]
             if not os.path.exists(EXPORT_FOLDER):
                 os.makedirs(EXPORT_FOLDER)
 
@@ -154,72 +159,87 @@ class MicroPhoneRecorder:
             second_recording = None
             third_recording = None
             while d:
+                
+                
                 self.q.join()
+                
+                try:
+                    
+                    sample_width, data = self.record()
+                    # if there was no recording done so far
+                    # store the first 3 seconds in the first recording
+                    if first_recording == None:
+                        first_recording = data
+                    # if there was only one recording done so far
+                    # store the next recording in the second recording
+                    elif second_recording == None:
+                        second_recording = data
+                    # for every recording coming after the first 2 times 3 seconds
+                    # store the recording in the third recording
+                    else:
+                        third_recording = data
 
-                sample_width, data = self.record()
-                # if there was no recording done so far
-                # store the first 3 seconds in the first recording
-                if first_recording == None:
-                    first_recording = data
-                # if there was only one recording done so far
-                # store the next recording in the second recording
-                elif second_recording == None:
-                    second_recording = data
-                # for every recording coming after the first 2 times 3 seconds
-                # store the recording in the third recording
-                else:
-                    third_recording = data
+                        # append all the recordings to a 9 seconds interval
+                        data = first_recording
+                        data = np.append(data, second_recording)
+                        data = np.append(data, third_recording)
+                        # pack the data properly to be exported as a wave file
+                        data = pack('<' + ('h' * len(data)), *data)
 
-                    # append all the recordings to a 9 seconds interval
-                    data = first_recording
-                    data = np.append(data, second_recording)
-                    data = np.append(data, third_recording)
-                    # pack the data properly to be exported as a wave file
-                    data = pack('<' + ('h' * len(data)), *data)
+                        wf = wave.open(
+                            EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + ".wav",
+                            'wb')
+                        wf.setnchannels(1)
+                        wf.setsampwidth(sample_width)
+                        wf.setframerate(self.RATE)
+                        wf.writeframes(data)
+                        wf.close()
 
-                    wf = wave.open(
-                        EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + ".wav",
-                        'wb')
-                    wf.setnchannels(1)
-                    wf.setsampwidth(sample_width)
-                    wf.setframerate(self.RATE)
-                    wf.writeframes(data)
-                    wf.close()
+                        #
+                        song = AudioSegment.from_wav(
+                            EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + ".wav")
 
-                    #
-                    song = AudioSegment.from_wav(
-                        EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + ".wav")
 
-                    #This has to be transformed here.
+                        #This has to be transformed here.
 
-                    result =  self.fe.split_song(song) # just get the features out.
+                        result =  self.fe.split_song(song) # just get the features out.
+                        #result = result.flatten()
+                        #print(len(result))
+                        #print(result)
+                        headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+                        response = requests.post(self.URL, headers=headers, data=pd.Series(result).to_json(orient='values'))
+                        self.myqueue.append(response.json())
+                        # clean up
+                        os.remove(EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(
+                            self.WAVE_OUTPUT_FILENAME_EXTENSION) + ".wav")
+                        #os.remove(EXPORT_FOLDER)
 
-                    response = requests.post('localhost:50000', data=result)
-                    print(response)
+                        #                 result["filename"] = i
 
-                    #                 result["filename"] = i
+                        # dict_to_append = result.to_dict('record')
 
-                    # dict_to_append = result.to_dict('record')
+                        # to_json.append(dict_to_append[0])
+                        # print result.to_dict('list')
+                        #sys.stdout.write("\r" + str(response.to_dict('record')[0]))
+                        #sys.stdout.flush()
+                        # print result_all.to_json()
 
-                    # to_json.append(dict_to_append[0])
-                    # print result.to_dict('list')
-                    #sys.stdout.write("\r" + str(response.to_dict('record')[0]))
-                    #sys.stdout.flush()
-                    # print result_all.to_json()
+                        # increase the name counter of the filename
+                        self.WAVE_OUTPUT_FILENAME_EXTENSION += 1
 
-                    # increase the name counter of the filename
-                    self.WAVE_OUTPUT_FILENAME_EXTENSION += 1
-
-                    # shift the recordings and delete the last recording
-                    # shift the second recording to be the first now
-                    first_recording = None
-                    first_recording = second_recording
-                    # shift the third recording to be the second now
-                    second_recording = None
-                    second_recording = third_recording
-                    # empty the third recording so a new recording can be made
-                    third_recording = None
-
+                        # shift the recordings and delete the last recording
+                        # shift the second recording to be the first now
+                        first_recording = None
+                        first_recording = second_recording
+                        # shift the third recording to be the second now
+                        second_recording = None
+                        second_recording = third_recording
+                        # empty the third recording so a new recording can be made
+                        third_recording = None
+                except Exception, e:
+                    traceback.print_exc()
+                    print("Exception in Processing Audio. Continuing..." + str(e))
+                    pass
                 # d = False
 
                 # Exit the loop with enter
@@ -233,6 +253,11 @@ class MicroPhoneRecorder:
             self.q.task_done()
 
     #if __name__ == '__main__':
+    def pop_emotions(self):
+        if len(self.myqueue)>0:
+            return self.myqueue.popleft()[0]#it is saved as an array with inside a dictionary
+        else:
+            return None
 
     def start_recording(self):
         self.t = threading.Thread(target=self.record_to_file)

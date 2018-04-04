@@ -6,7 +6,7 @@ import MicroPhoneRecorder
 
 #em = EmotionExtractor.EmotionExtractor('baseline.npy', 'baseline_mean_sd.pickle')
 
-mt = MicroPhoneRecorder.MicroPhoneRecorder(Device=1, WAVE_OUTPUT_FILENAME="output", EXPORT_FOLDER="Agent", BAELINE= 'baseline_mean_sd.pickle')
+mt = MicroPhoneRecorder.MicroPhoneRecorder(Device=1, WAVE_OUTPUT_FILENAME="output", EXPORT_FOLDER="Agent", BASELINE= 'baseline_mean_sd.pickle')
 #mt2 = MicroPhoneRecorder.MicroPhoneRecorder(Device=1,  WAVE_OUTPUT_FILENAME="output2", EXPORT_FOLDER="Customer",EMOTION_EXTRACTOR= em)
 
 root = Tk()

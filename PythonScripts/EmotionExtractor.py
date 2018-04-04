@@ -28,14 +28,24 @@ from matplotlib import pyplot as plt
 
 class EmotionExtractor:
 
-        def __init__(self, filename_baseline,filename_mean_sd):
-            self.structure = Structures.Structures(3, 34, 7, 256)
-            self.my_attention_network = self.structure.structure_11_cnn_attention_dot()
-            #load weights
-            self.my_attention_network.load_weights(filename_baseline)
-            self.dictionary =   pickle.load(open(filename_mean_sd, "rb"))
-            self.mean_train = self.dictionary.get("mean")
-            self.sd_train = self.dictionary.get("sd")
+        def __init__(self, filename_baseline,filename_mean_sd, Conv=False):
+            self.Conv = Conv
+            if(self.Conv==False):
+                self.structure = Structures.Structures(3, 34, 7, 256)
+                self.my_attention_network = self.structure.structure_11_cnn_attention_dot_old()
+                #load weights
+                self.my_attention_network.load_weights(filename_baseline)
+                self.dictionary =   pickle.load(open(filename_mean_sd, "rb"))
+                self.mean_train = self.dictionary.get("mean")
+                self.sd_train = self.dictionary.get("sd")
+            else:
+                self.structure = Structures.Structures(119,34,7,60)
+                self.my_attention_network = self.structure.structure_convolutions_attention()
+                # load weights
+                self.my_attention_network.load_weights(filename_baseline)
+                self.dictionary = pickle.load(open(filename_mean_sd, "rb"))
+                self.mean_train = self.dictionary.get("mean")
+                self.sd_train = self.dictionary.get("sd")
 
         def extract_features(self, file_path):
             [Fs, x] = audioBasicIO.readAudioFile(file_path)
@@ -100,11 +110,19 @@ class EmotionExtractor:
 
         def predict_emotion(self,convers):
             mydict = []
-            prediction = self.my_attention_network.predict(np.array([convers]))[0]
-            # print prediction
-            mydict.append({"Anger": prediction[0], "Disgust": prediction[1], "Fear": prediction[3],
-                           "Happiness": prediction[5], "Neutral": prediction[6], "Sadness": prediction[2],
-                           "Surprise": prediction[4]})
+            if self.Conv==False:
+                prediction = self.my_attention_network.predict(np.array([convers]))[0]
+                # print prediction
+                mydict.append({"Anger": prediction[0], "Disgust": prediction[1], "Fear": prediction[3],
+                               "Happiness": prediction[5], "Neutral": prediction[6], "Sadness": prediction[2],
+                               "Surprise": prediction[4]})
+            else:
+                #print(np.shape(np.asarray(convers)))
+                prediction = self.my_attention_network.predict((np.swapaxes(np.asarray([convers]),1,2)))[0]
+                # print prediction
+                mydict.append({"Anger": prediction[0], "Disgust": prediction[1], "Fear": prediction[3],
+                               "Happiness": prediction[5], "Neutral": prediction[6], "Sadness": prediction[2],
+                               "Surprise": prediction[4]})
 
             return mydict
 

@@ -6,31 +6,54 @@ from keras.layers import Dense
 from keras.models import model_from_json
 import numpy as np
 import json
-
+import sys
+import pandas as pd
 
 app = Flask(__name__)
 
 import EmotionExtractor
 
-em = EmotionExtractor.EmotionExtractor('baseline.npy', 'baseline_mean_sd.pickle')
+em = EmotionExtractor.EmotionExtractor('baseline.npy', 'baseline_mean_sd.pickle', Conv=False)
+#em = EmotionExtractor.EmotionExtractor('baseline.npy', 'baseline_mean_sd.pickle', Conv=True)
+
+
+@app.route('/alive', methods= ['GET'])
+def alive():
+    print('Hello world!')
+    return "ALIVE"
 
 
 @app.route('/annotate', methods=['POST'])
-def upload_agent():
+def annotate():
     if request.method == 'POST':
 
-        data_dict = dict(request.form)
-        jdata = data_dict['data']  # this is what we get in here a form with data
-        myjson = jdata[0]
-        mydata = json.loads(myjson)['data'][0]
-        prediction = em.predict_emotion(np.array(mydata))
-        body = {"messages": [
-            {"Anger": round(prediction[0][0], 2), "Disgust": round(prediction[0][1], 2),
-             "Fear": round(prediction[0][2], 2), "Happiness": round(prediction[0][4], 2),
-             "Neutral": round(prediction[0][6], 2), "Sadness": round(prediction[0][5], 2),
-             "Surprise": round(prediction[0][3], 2)}]}
+        mydata = request.data
 
-        return body
+        Stringcodio = mydata.replace("[", "").replace("]","").split(",")
+        values = [float(val) for val in Stringcodio]
+        print(values)
+        valpred = np.reshape(np.array(values), (3,34))
+        prediction = em.predict_emotion(valpred)
+
+        jsonpred = pd.Series(prediction).to_json(orient='values')
+
+        return jsonpred
+
+@app.route('/annotate2', methods=['POST'])
+def annotate2():
+    if request.method == 'POST':
+
+        mydata = request.data
+
+        Stringcodio = mydata.replace("[", "").replace("]","").split(",")
+        values = [float(val) for val in Stringcodio]
+        valpred = np.reshape(np.array(values), (119,34))
+        prediction = em.predict_emotion(valpred)
+
+        jsonpred = pd.Series(prediction).to_json(orient='values')
+
+        return jsonpred
+
 
 
 if __name__ == '__main__':
