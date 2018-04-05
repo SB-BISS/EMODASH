@@ -12,7 +12,7 @@ logging.getLogger('socketIO-client-nexus').setLevel(logging.ERROR);
 logging.getLogger('root').setLevel(logging.INFO);
 logging.basicConfig();
 
-vera_hub_address = urlparse(os.getenv('VERA_HUB_ADDRESS', 'http://localhost:3005'));
+vera_hub_address = urlparse(os.getenv('VERA_HUB_ADDRESS', 'http://localhost:8085'));
 vera_rig_id = os.getenv('VERA_RIG_ID', 'TESTSPACE');
 vera_type = 'vera-preprocessor';
 vera_emotion_processor_address = urlparse(os.getenv('VERA_EMOTION_PROCESSOR_ADDRESS', 'http://localhost:50000/annotate'));

@@ -208,7 +208,7 @@ class MicroPhoneRecorder:
                         #print(result)
                         headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
                         response = requests.post(self.URL, headers=headers, data=pd.Series(result).to_json(orient='values'))
-                        self.myqueue.append(response.json())
+                        self.myqueue.append({'emotions': response.json(), 'features': result})
                         # clean up
                         os.remove(EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(
                             self.WAVE_OUTPUT_FILENAME_EXTENSION) + ".wav")
