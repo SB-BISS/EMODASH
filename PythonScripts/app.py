@@ -37,15 +37,16 @@ def vera_preprocess(e, s, d):
     """ Replace this code with VERA pre-processor code for audio processing """
     while True:
         if not e.isSet():
-            e.wait(3+1); # 3 seconds of audio processing and 1 second for analyzing
+            e.wait(1); # 3 seconds of audio processing and 1 second for analyzing
             logging.info('processing...');
             data = get_emotions();
+            #print("processing")
             if data!=None:
                 global emotions
                 callid= d.get("callid") # we should get all the relevant information here.
-                emotions.append(data)#it will get big at a certain point
-                data["callid"] = callid
+                data[0]["callid"] = callid
                 print(data)
+                emotions.append(data[0])#it will get big at a certain point
                 s.emit('emotion', data)
             
 

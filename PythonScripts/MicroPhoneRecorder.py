@@ -203,12 +203,17 @@ class MicroPhoneRecorder:
                         #This has to be transformed here.
 
                         result =  self.fe.split_song(song) # just get the features out.
-                        #result = result.flatten()
-                        #print(len(result))
-                        #print(result)
+
                         headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
-                        response = requests.post(self.URL, headers=headers, data=pd.Series(result).to_json(orient='values'))
-                        self.myqueue.append({'emotions': response.json(), 'features': result})
+
+                        var_res= pd.Series(result).to_json(orient='values')
+
+                        #with open("my_test.csv", "a+") as myfile:
+                        #    myfile.writelines([var_res])
+                        #myfile.close()
+
+                        response = requests.post(self.URL, headers=headers, data=var_res)
+                        self.myqueue.append(response.json())
                         # clean up
                         os.remove(EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(
                             self.WAVE_OUTPUT_FILENAME_EXTENSION) + ".wav")
@@ -255,7 +260,7 @@ class MicroPhoneRecorder:
     #if __name__ == '__main__':
     def pop_emotions(self):
         if len(self.myqueue)>0:
-            return self.myqueue.popleft()[0]#it is saved as an array with inside a dictionary
+            return self.myqueue.popleft()#it is saved as an array with inside a dictionary
         else:
             return None
 
