@@ -12,11 +12,11 @@ logging.getLogger('socketIO-client-nexus').setLevel(logging.ERROR);
 logging.getLogger('root').setLevel(logging.INFO);
 logging.basicConfig();
 
-vera_hub_address = urlparse(os.getenv('VERA_HUB_ADDRESS', 'http://localhost:8085'));
+vera_hub_address = urlparse(os.getenv('VERA_HUB_URI', 'http://localhost:3005'));
 vera_rig_id = os.getenv('VERA_RIG_ID', 'TESTSPACE');
 vera_type = 'vera-preprocessor';
-vera_emotion_processor_address = urlparse(os.getenv('VERA_EMOTION_PROCESSOR_ADDRESS', 'http://localhost:50000/annotate'));
-
+vera_emotion_processor_address = urlparse(os.getenv('VERA_EMOTION_PROCESSOR_ADDRESS', 'http://localhost:45000/annotate'));
+vera_mongo_db = urlparse(os.getenv("VERA_MONGO_DB", "mongodb://127.0.0.1:27017/VERAPreProcessor"))
 
 """ global variables """
 vera_namespace = None;
@@ -24,6 +24,13 @@ event = None;
 emotions = [];
 """ microphone """
 mt = MicroPhoneRecorder.MicroPhoneRecorder(RATE= 8000, Device=1, WAVE_OUTPUT_FILENAME="output", EXPORT_FOLDER="Agent", BASELINE= 'baseline_mean_sd.pickle', URL=vera_emotion_processor_address.geturl())
+""" set mongo db"""
+
+try:
+    mt.set_mongo_db(URL = vera_mongo_db.geturl())
+except:
+    print("WARNING: Mongo DB not set up")
+    pass
 
 
 
@@ -44,10 +51,19 @@ def vera_preprocess(e, s, d):
             if data!=None:
                 global emotions
                 callid= d.get("callid") # we should get all the relevant information here.
-                data[0]["callid"] = callid
-                print(data)
-                emotions.append(data[0])#it will get big at a certain point
-                s.emit('emotion', data)
+                callagentid = d.get("callagentid")
+                data["callid"] = callid
+                data["callagentid"] = callagentid
+                mt.save_in_mondo_db(callid,callagentid,data)
+                print("===START READING===")
+                print("Right Channel")
+                print(data['right_emotion'])
+                print("Left Channel")
+                print(data['left_emotion'])
+                print("===END READING===")
+
+                emotions.append(data['right_emotion'])#it will get big at a certain point
+                #s.emit('emotion', data['right_emotion'])
             
 
 

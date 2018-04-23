@@ -197,6 +197,9 @@ def mul_stereo(sample, width):
 if __name__ == '__main__':
     data,sample_width = record_to_file()
     left, right = mul_stereo(data, sample_width)
+    print type(left)
+    print type(right)
+
 
     if not os.path.exists('out'):
         os.makedirs("out")

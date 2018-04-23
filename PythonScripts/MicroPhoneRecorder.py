@@ -1,28 +1,33 @@
-import traceback
-import sys
-import json
-from sys import byteorder
-from array import array
-from struct import pack
-import time
-import threading
-from Queue import Queue
-import numpy as np
-import pyaudio
-import wave
+import audioop
 import os
-from pydub import AudioSegment
-import FeatureExtractor
-import requests
-import pandas as pd
+import threading
+import time
+import traceback
+import wave
+from Queue import Queue
+from array import array
 from collections import deque
+from struct import pack
+from sys import byteorder
+
+import datetime
+import numpy as np
+import pandas as pd
+import pyaudio
+import requests
+from pydub import AudioSegment
+from pymongo import MongoClient
+
+import FeatureExtractor
 
 
 class MicroPhoneRecorder:
 
 
-    def __init__(self,Device = 1, Input = True, Channels = 1,  THRESHOLD = 500, CHUNK_SIZE = 1024, FORMAT = pyaudio.paInt16, RATE = 8000, RECORD_SECONDS = 3.25,WAVE_OUTPUT_FILENAME_EXTENSION = 0, EXPORT_FOLDER= "Recordings", WAVE_OUTPUT_FILENAME = "output", BASELINE = 'baseline_mean_sd.pickle', URL= "http://localhost:50000/annotate"):
-
+    def __init__(self,Device = 1, Input = True, Channels = 2,  THRESHOLD = 500, CHUNK_SIZE = 1024, FORMAT = pyaudio.paInt16, RATE = 8000, RECORD_SECONDS = 3.25,WAVE_OUTPUT_FILENAME_EXTENSION = 0, EXPORT_FOLDER= "Recordings", WAVE_OUTPUT_FILENAME = "output", BASELINE = 'baseline_mean_sd.pickle', URL= "http://localhost:50000/annotate"):
+        ''' MongoDB must be up... the assumption is that the client is local '''
+        self.client = None
+        self.db = None
         self.myqueue= deque([])
         self.Input = Input
         self.Device = Device
@@ -45,6 +50,9 @@ class MicroPhoneRecorder:
         self.lock = threading.Lock()
         self.fe = FeatureExtractor.FeatureExtractor(BASELINE)
 
+    def set_mongo_db(self,URL="mongodb://127.0.0.1:27017/VERAPreProcessor"):
+        self.client = MongoClient(URL)
+        self.db = self.client.VERAPreProcessor
 
     def is_silent(self,snd_data):
         "Returns 'True' if below the 'silent' threshold"
@@ -166,6 +174,8 @@ class MicroPhoneRecorder:
                 try:
                     
                     sample_width, data = self.record()
+
+
                     # if there was no recording done so far
                     # store the first 3 seconds in the first recording
                     if first_recording == None:
@@ -179,44 +189,82 @@ class MicroPhoneRecorder:
                     else:
                         third_recording = data
 
-                        # append all the recordings to a 9 seconds interval
                         data = first_recording
                         data = np.append(data, second_recording)
                         data = np.append(data, third_recording)
+                        data=  pack('<' + ('h' * len(data)), *data)
+                        data_L, data_R = self.mul_stereo(data, sample_width)
+
+                        # append all the recordings to a 9 seconds interval, left channel
+                        #data_L = first_recording.get("l")
+                        #data_L = data_L + second_recording.get("l")
+                        #data_L = data_L + third_recording.get("l")
                         # pack the data properly to be exported as a wave file
-                        data = pack('<' + ('h' * len(data)), *data)
+                        #data_L = pack('<' + ('h' * len(data_L)), *data_L)
+
+                        # append all the recordings to a 9 seconds interval, right channel
+                        #data_R = first_recording.get("r")
+                        #data_R = data_R + second_recording.get("r")
+                        #data_R = data_R + third_recording.get("r")
+                        # pack the data properly to be exported as a wave file
+                        #data_R = pack('<' + ('h' * len(data_R)), *data_R)
 
                         wf = wave.open(
-                            EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + ".wav",
+                            EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_L.wav",
                             'wb')
                         wf.setnchannels(1)
                         wf.setsampwidth(sample_width)
                         wf.setframerate(self.RATE)
-                        wf.writeframes(data)
+                        wf.writeframes(data_L)
                         wf.close()
 
+                        wf = wave.open(
+                            EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_R.wav",
+                            'wb')
+                        wf.setnchannels(1)
+                        wf.setsampwidth(sample_width)
+                        wf.setframerate(self.RATE)
+                        wf.writeframes(data_R)
+                        wf.close()
+
+
                         #
-                        song = AudioSegment.from_wav(
-                            EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + ".wav")
+                        song_L = AudioSegment.from_wav(
+                            EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_L.wav")
+
+                        song_R = AudioSegment.from_wav(
+                            EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_R.wav")
+
 
 
                         #This has to be transformed here.
 
-                        result =  self.fe.split_song(song) # just get the features out.
+                        result_L =  self.fe.split_song(song_L) # just get the features out.
+                        result_R = self.fe.split_song(song_R)  # just get the features out.
 
                         headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
 
-                        var_res= pd.Series(result).to_json(orient='values')
+                        var_res_L= pd.Series(result_L).to_json(orient='values')
+                        var_res_R = pd.Series(result_R).to_json(orient='values')
 
                         #with open("my_test.csv", "a+") as myfile:
                         #    myfile.writelines([var_res])
                         #myfile.close()
 
-                        response = requests.post(self.URL, headers=headers, data=var_res)
-                        self.myqueue.append(response.json())
+                        response_L = requests.post(self.URL, headers=headers, data=var_res_L)
+
+                        response_R = requests.post(self.URL, headers=headers, data=var_res_R)
+
+                        self.myqueue.append({"left_emotion":response_L.json(), "right_emotion":response_R.json(),
+                                             "left_features":var_res_L, "right_features":var_res_R}) #double pop?
+
                         # clean up
                         os.remove(EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(
-                            self.WAVE_OUTPUT_FILENAME_EXTENSION) + ".wav")
+                            self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_L.wav")
+
+                        os.remove(EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(
+                            self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_R.wav")
+
                         #os.remove(EXPORT_FOLDER)
 
                         #                 result["filename"] = i
@@ -257,10 +305,43 @@ class MicroPhoneRecorder:
             print('Task Completing')
             self.q.task_done()
 
+
+    def save_in_mondo_db(self,callagentid, callid, DataToSave):
+        try:
+            features = self.db.features
+
+            featureDataItem = {
+
+                "callagentid": callagentid,
+
+                "callid": callid,
+
+                "calldatetime": datetime.datetime.now(),
+
+                "createdAt": datetime.datetime.utcnow(),
+
+                "data": DataToSave  # replace string with features object
+
+            }
+
+            features.insert(featureDataItem)
+        except:
+            print("NOT SAVED, EXCEPTION DURING SAVING in MONGODB")
+            pass
+
+
+
+    def mul_stereo(self, sample, width):
+        lsample = audioop.tomono(sample, width, 1, 0)
+        rsample = audioop.tomono(sample, width, 0, 1)
+        return lsample, rsample
+
+
+
     #if __name__ == '__main__':
     def pop_emotions(self):
         if len(self.myqueue)>0:
-            return self.myqueue.popleft()#it is saved as an array with inside a dictionary
+            return self.myqueue.popleft() #it is saved as an array with inside a dictionary
         else:
             return None
 

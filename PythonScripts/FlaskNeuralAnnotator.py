@@ -57,4 +57,4 @@ def annotate2():
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=int("50000"), debug=True)
+    app.run(host="0.0.0.0", port=int("45000"), debug=True)
