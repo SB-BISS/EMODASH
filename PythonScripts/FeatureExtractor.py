@@ -19,6 +19,8 @@ import os
 import re
 import matplotlib.pyplot as plt
 from sklearn.externals import joblib
+from scipy.stats import kurtosis
+from scipy.stats import skew
 
 from pyAudioAnalysis import audioBasicIO
 from pyAudioAnalysis import audioFeatureExtraction
@@ -37,7 +39,8 @@ class FeatureExtractor:
 
     def __init__(self, filename_mean_sd, BIT_PRECISION=8):
         # load weights
-        self.dictionary = pickle.load(open(filename_mean_sd, "rb"))
+        #self.dictionary = pickle.load(open(filename_mean_sd, "rb"))
+        self.dictionary = pd.read_csv(open(filename_mean_sd, "rb")).to_dict('list')
         self.mean_train = self.dictionary.get("mean")
         self.sd_train = self.dictionary.get("sd")
         self.BIT_PRECISION=BIT_PRECISION
@@ -70,10 +73,16 @@ class FeatureExtractor:
         if len(features) == 0:
             features = np.zeros((34, 2))
 
-        features = np.mean(features, axis=1)
-        features = np.asarray(features).reshape(len(features), -1).transpose()
+        features_mean = np.mean(features, axis=1)
+        features_std = np.std(features, axis=1)
+        features_kurtosis = kurtosis(features, axis=1)
+        features_skew = skew(features, axis=1)
+
+        vec4moments = np.append(np.append(np.append(features_mean, features_std), features_kurtosis), features_skew, axis=1)
+
+        result = np.asarray(vec4moments).reshape(len(vec4moments), -1).transpose()
         # features_complete = np.append(features_complete, features, axis=0)
-        return features  # _complete
+        return result  # _complete
 
 
     def extract_features3(self, Fs, x):

@@ -166,6 +166,8 @@ class MicroPhoneRecorder:
             first_recording = None
             second_recording = None
             third_recording = None
+            fourth_recording = None
+            fifth_recording = None
             while d:
                 
                 
@@ -184,14 +186,25 @@ class MicroPhoneRecorder:
                     # store the next recording in the second recording
                     elif second_recording == None:
                         second_recording = data
+
+                    elif third_recording == None:
+                        third_recording = data
+
+
+                    elif fourth_recording == None:
+                        fourch_recording = data
+
                     # for every recording coming after the first 2 times 3 seconds
                     # store the recording in the third recording
                     else:
-                        third_recording = data
+                        fifth_recording = data
 
                         data = first_recording
                         data = np.append(data, second_recording)
                         data = np.append(data, third_recording)
+                        data = np.append(data, fourth_recording)
+                        data = np.append(data, fifth_recording)
+
                         data=  pack('<' + ('h' * len(data)), *data)
                         data_L, data_R = self.mul_stereo(data, sample_width)
 
@@ -289,6 +302,12 @@ class MicroPhoneRecorder:
                         second_recording = third_recording
                         # empty the third recording so a new recording can be made
                         third_recording = None
+                        third_recording = fourth_recording
+
+                        fourth_recording = None
+                        fourth_recording = fifth_recording
+
+
                 except Exception, e:
                     traceback.print_exc()
                     print("Exception in Processing Audio. Continuing..." + str(e))
