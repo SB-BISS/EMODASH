@@ -78,9 +78,10 @@ class FeatureExtractor:
         features_kurtosis = kurtosis(features, axis=1)
         features_skew = skew(features, axis=1)
 
-        vec4moments = np.append(np.append(np.append(features_mean, features_std), features_kurtosis), features_skew, axis=1)
+        vec4moments = np.append(np.append(np.append(features_mean, features_std), features_kurtosis), features_skew)
 
         result = np.asarray(vec4moments).reshape(len(vec4moments), -1).transpose()
+        #print(np.shape(result))
         # features_complete = np.append(features_complete, features, axis=0)
         return result  # _complete
 

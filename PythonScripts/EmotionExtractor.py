@@ -31,11 +31,11 @@ class EmotionExtractor:
         def __init__(self, filename_baseline,filename_mean_sd, Conv=False):
             self.Conv = Conv
             if(self.Conv==False):
-                self.structure = Structures.Structures(3, 34, 7, 256)
-                self.my_attention_network = self.structure.structure_11_cnn_attention_dot_old()
+                self.structure = Structures.Structures(5, 136, 7, 128)
+                self.my_attention_network = self.structure.structure_11_cnn_attention_dot2()
                 #load weights
                 self.my_attention_network.load_weights(filename_baseline)
-                self.dictionary =   pickle.load(open(filename_mean_sd, "rb"))
+                self.dictionary = pd.read_csv("./mean_std.csv").to_dict('list')
                 self.mean_train = self.dictionary.get("mean")
                 self.sd_train = self.dictionary.get("sd")
             else:

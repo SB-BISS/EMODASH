@@ -23,7 +23,7 @@ vera_namespace = None;
 event = None;
 emotions = [];
 """ microphone """
-mt = MicroPhoneRecorder.MicroPhoneRecorder(RATE= 8000, Device=1, WAVE_OUTPUT_FILENAME="output", EXPORT_FOLDER="Agent", BASELINE= 'baseline_mean_sd.pickle', URL=vera_emotion_processor_address.geturl())
+mt = MicroPhoneRecorder.MicroPhoneRecorder(RATE= 8000, Device=1, WAVE_OUTPUT_FILENAME="output", EXPORT_FOLDER="Agent", BASELINE= './mean_std.csv', URL=vera_emotion_processor_address.geturl())
 """ set mongo db"""
 
 try:

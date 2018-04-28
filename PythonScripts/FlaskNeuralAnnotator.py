@@ -13,9 +13,10 @@ app = Flask(__name__)
 
 import EmotionExtractor
 
-em = EmotionExtractor.EmotionExtractor('baseline.npy', 'baseline_mean_sd.pickle', Conv=False)
+#em = EmotionExtractor.EmotionExtractor('baseline.npy', 'baseline_mean_sd.pickle', Conv=False)
 #em = EmotionExtractor.EmotionExtractor('baseline.npy', 'baseline_mean_sd.pickle', Conv=True)
 
+em = EmotionExtractor.EmotionExtractor('baseline_context5_conv_simple.weights', 'mean_std.csv', Conv=False)
 
 @app.route('/alive', methods= ['GET'])
 def alive():
@@ -32,7 +33,7 @@ def annotate():
         Stringcodio = mydata.replace("[", "").replace("]","").split(",")
         values = [float(val) for val in Stringcodio]
         print(values)
-        valpred = np.reshape(np.array(values), (3,34))
+        valpred = np.reshape(np.array(values), (5,136))
         prediction = em.predict_emotion(valpred)
 
         jsonpred = pd.Series(prediction).to_json(orient='values')

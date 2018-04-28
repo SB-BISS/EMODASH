@@ -192,7 +192,7 @@ class MicroPhoneRecorder:
 
 
                     elif fourth_recording == None:
-                        fourch_recording = data
+                        fourth_recording = data
 
                     # for every recording coming after the first 2 times 3 seconds
                     # store the recording in the third recording
@@ -204,6 +204,7 @@ class MicroPhoneRecorder:
                         data = np.append(data, third_recording)
                         data = np.append(data, fourth_recording)
                         data = np.append(data, fifth_recording)
+
 
                         data=  pack('<' + ('h' * len(data)), *data)
                         data_L, data_R = self.mul_stereo(data, sample_width)
@@ -240,6 +241,7 @@ class MicroPhoneRecorder:
                         wf.writeframes(data_R)
                         wf.close()
 
+                        print("reached 3")
 
                         #
                         song_L = AudioSegment.from_wav(
@@ -249,11 +251,11 @@ class MicroPhoneRecorder:
                             EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_R.wav")
 
 
-
                         #This has to be transformed here.
 
                         result_L =  self.fe.split_song(song_L) # just get the features out.
                         result_R = self.fe.split_song(song_R)  # just get the features out.
+
 
                         headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
 
