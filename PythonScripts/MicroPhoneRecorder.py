@@ -241,7 +241,7 @@ class MicroPhoneRecorder:
                         wf.writeframes(data_R)
                         wf.close()
 
-                        print("reached 3")
+                        #print("reached 3")
 
                         #
                         song_L = AudioSegment.from_wav(

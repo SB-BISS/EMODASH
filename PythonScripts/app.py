@@ -16,6 +16,8 @@ vera_hub_address = urlparse(os.getenv('VERA_HUB_URI', 'http://localhost:3005'));
 vera_rig_id = os.getenv('VERA_RIG_ID', 'TESTSPACE');
 vera_type = 'vera-preprocessor';
 vera_emotion_processor_address = urlparse(os.getenv('VERA_EMOTION_PROCESSOR_ADDRESS', 'http://localhost:45000/annotate'));
+
+#vera_emotion_processor_address = urlparse(os.getenv('VERA_EMOTION_PROCESSOR_ADDRESS', 'http://vera.northeurope.cloudapp.azure.com:50001/annotate'));
 vera_mongo_db = urlparse(os.getenv("VERA_MONGO_DB", "mongodb://127.0.0.1:27017/VERAPreProcessor"))
 
 """ global variables """
@@ -56,6 +58,7 @@ def vera_preprocess(e, s, d):
                 data["callagentid"] = callagentid
                 mt.save_in_mondo_db(callid,callagentid,data)
                 print("===START READING===")
+                #print(data)
                 print("Right Channel")
                 print(data['right_emotion'])
                 print("Left Channel")

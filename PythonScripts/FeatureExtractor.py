@@ -80,10 +80,10 @@ class FeatureExtractor:
 
         vec4moments = np.append(np.append(np.append(features_mean, features_std), features_kurtosis), features_skew)
 
-        result = np.asarray(vec4moments).reshape(len(vec4moments), -1).transpose()
+        #result = np.asarray(vec4moments).reshape(len(vec4moments), -1).transpose()
         #print(np.shape(result))
         # features_complete = np.append(features_complete, features, axis=0)
-        return result  # _complete
+        return vec4moments  # _complete
 
 
     def extract_features3(self, Fs, x):
