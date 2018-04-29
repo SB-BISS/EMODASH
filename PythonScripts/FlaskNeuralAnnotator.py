@@ -9,6 +9,8 @@ import json
 import sys
 import pandas as pd
 
+import time
+
 app = Flask(__name__)
 
 import EmotionExtractor
@@ -16,7 +18,7 @@ import EmotionExtractor
 #em = EmotionExtractor.EmotionExtractor('baseline.npy', 'baseline_mean_sd.pickle', Conv=False)
 #em = EmotionExtractor.EmotionExtractor('baseline.npy', 'baseline_mean_sd.pickle', Conv=True)
 
-em = EmotionExtractor.EmotionExtractor('baseline_context5_conv_simple.weights', 'mean_std.csv', Conv=False)
+em = EmotionExtractor.EmotionExtractor('baseline_context5_conv_simple2.weights', 'mean_std_old.csv', Conv=False)
 
 @app.route('/alive', methods= ['GET'])
 def alive():
@@ -27,7 +29,7 @@ def alive():
 @app.route('/annotate', methods=['POST'])
 def annotate():
     if request.method == 'POST':
-
+        start_time = time.time()
         mydata = request.data
 
         Stringcodio = mydata.replace("[", "").replace("]","").split(",")
@@ -37,6 +39,8 @@ def annotate():
         prediction = em.predict_emotion(valpred)
 
         jsonpred = pd.Series(prediction).to_json(orient='values')
+
+        print("--- %s seconds ---" % (time.time() - start_time))
 
         return jsonpred
 

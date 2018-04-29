@@ -9,11 +9,13 @@ from array import array
 from collections import deque
 from struct import pack
 from sys import byteorder
-
+import time
+from StringIO import StringIO
 import datetime
 import numpy as np
 import pandas as pd
 import pyaudio
+import threading;
 import requests
 from pydub import AudioSegment
 from pymongo import MongoClient
@@ -197,6 +199,8 @@ class MicroPhoneRecorder:
                     # for every recording coming after the first 2 times 3 seconds
                     # store the recording in the third recording
                     else:
+
+
                         fifth_recording = data
 
                         data = first_recording
@@ -205,81 +209,11 @@ class MicroPhoneRecorder:
                         data = np.append(data, fourth_recording)
                         data = np.append(data, fifth_recording)
 
+                        thread = threading.Thread(name='preprocessor', target=self.process_data,
+                                                  args=(data,sample_width));
+                        thread.start();
 
-                        data=  pack('<' + ('h' * len(data)), *data)
-                        data_L, data_R = self.mul_stereo(data, sample_width)
-
-                        # append all the recordings to a 9 seconds interval, left channel
-                        #data_L = first_recording.get("l")
-                        #data_L = data_L + second_recording.get("l")
-                        #data_L = data_L + third_recording.get("l")
-                        # pack the data properly to be exported as a wave file
-                        #data_L = pack('<' + ('h' * len(data_L)), *data_L)
-
-                        # append all the recordings to a 9 seconds interval, right channel
-                        #data_R = first_recording.get("r")
-                        #data_R = data_R + second_recording.get("r")
-                        #data_R = data_R + third_recording.get("r")
-                        # pack the data properly to be exported as a wave file
-                        #data_R = pack('<' + ('h' * len(data_R)), *data_R)
-
-                        wf = wave.open(
-                            EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_L.wav",
-                            'wb')
-                        wf.setnchannels(1)
-                        wf.setsampwidth(sample_width)
-                        wf.setframerate(self.RATE)
-                        wf.writeframes(data_L)
-                        wf.close()
-
-                        wf = wave.open(
-                            EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_R.wav",
-                            'wb')
-                        wf.setnchannels(1)
-                        wf.setsampwidth(sample_width)
-                        wf.setframerate(self.RATE)
-                        wf.writeframes(data_R)
-                        wf.close()
-
-                        #print("reached 3")
-
-                        #
-                        song_L = AudioSegment.from_wav(
-                            EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_L.wav")
-
-                        song_R = AudioSegment.from_wav(
-                            EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_R.wav")
-
-
-                        #This has to be transformed here.
-
-                        result_L =  self.fe.split_song(song_L) # just get the features out.
-                        result_R = self.fe.split_song(song_R)  # just get the features out.
-
-
-                        headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
-
-                        var_res_L= pd.Series(result_L).to_json(orient='values')
-                        var_res_R = pd.Series(result_R).to_json(orient='values')
-
-                        #with open("my_test.csv", "a+") as myfile:
-                        #    myfile.writelines([var_res])
-                        #myfile.close()
-
-                        response_L = requests.post(self.URL, headers=headers, data=var_res_L)
-
-                        response_R = requests.post(self.URL, headers=headers, data=var_res_R)
-
-                        self.myqueue.append({"left_emotion":response_L.json(), "right_emotion":response_R.json(),
-                                             "left_features":var_res_L, "right_features":var_res_R}) #double pop?
-
-                        # clean up
-                        os.remove(EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(
-                            self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_L.wav")
-
-                        os.remove(EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(
-                            self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_R.wav")
-
+                        #self.process_data(data,sample_width)
                         #os.remove(EXPORT_FOLDER)
 
                         #                 result["filename"] = i
@@ -293,7 +227,7 @@ class MicroPhoneRecorder:
                         # print result_all.to_json()
 
                         # increase the name counter of the filename
-                        self.WAVE_OUTPUT_FILENAME_EXTENSION += 1
+                        #self.WAVE_OUTPUT_FILENAME_EXTENSION += 1
 
                         # shift the recordings and delete the last recording
                         # shift the second recording to be the first now
@@ -309,6 +243,7 @@ class MicroPhoneRecorder:
                         fourth_recording = None
                         fourth_recording = fifth_recording
 
+                        fifth_recording=None
 
                 except Exception, e:
                     traceback.print_exc()
@@ -327,7 +262,7 @@ class MicroPhoneRecorder:
             self.q.task_done()
 
 
-    def save_in_mondo_db(self,callagentid, callid, DataToSave):
+    def save_in_mongo_db(self,callagentid, callid, DataToSave):
         try:
             features = self.db.features
 
@@ -350,6 +285,69 @@ class MicroPhoneRecorder:
             print("NOT SAVED, EXCEPTION DURING SAVING in MONGODB")
             pass
 
+
+    def process_data(self,data,sample_width):
+        data = pack('<' + ('h' * len(data)), *data)
+        data_L, data_R = self.mul_stereo(data, sample_width)
+
+        '''wf = wave.open(
+            EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_L.wav",
+            'wb')
+        wf.setnchannels(1)
+        wf.setsampwidth(sample_width)
+        wf.setframerate(self.RATE)
+        wf.writeframes(data_L)
+        wf.close()
+
+        wf = wave.open(
+            EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_R.wav",
+            'wb')
+        wf.setnchannels(1)
+        wf.setsampwidth(sample_width)
+        wf.setframerate(self.RATE)
+        wf.writeframes(data_R)
+        wf.close()
+
+        # print("reached 3")
+
+        #
+        song_L = AudioSegment.from_wav(
+            EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_L.wav")
+
+        song_R = AudioSegment.from_wav(
+            EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_R.wav")
+        '''
+        song_L = AudioSegment.from_file(StringIO(data_L),format="raw", channels=1,sample_width=sample_width,frame_rate=self.RATE)
+        song_R = AudioSegment.from_file(StringIO(data_R),format="raw",channels=1,sample_width=sample_width,frame_rate=self.RATE)
+
+        # This has to be transformed here.
+
+        result_L = self.fe.split_song(song_L)  # just get the features out.
+        result_R = self.fe.split_song(song_R)  # just get the features out.
+
+        headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+
+        var_res_L = pd.Series(result_L).to_json(orient='values')
+        var_res_R = pd.Series(result_R).to_json(orient='values')
+
+        # with open("my_test.csv", "a+") as myfile:
+        #    myfile.writelines([var_res])
+        # myfile.close()
+        start_time = time.time()
+        response_L = requests.post(self.URL, headers=headers, data=var_res_L)
+        response_R = requests.post(self.URL, headers=headers, data=var_res_R)
+        print("--- %s seconds ---" % (time.time() - start_time))
+
+        self.myqueue.append({"left_emotion": response_L.json(), "right_emotion": response_R.json(),
+                             "left_features": var_res_L, "right_features": var_res_R})  # double pop?
+
+        # clean up
+        '''os.remove(EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(
+            self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_L.wav")
+
+        os.remove(EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(
+            self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_R.wav")
+        '''
 
 
     def mul_stereo(self, sample, width):
