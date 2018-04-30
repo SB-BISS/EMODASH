@@ -60,7 +60,7 @@ def vera_preprocess(e, s, d):
                 #print("Left Channel")
                 #print(data['left_emotion'][0])
                 #print("===END READING===")
-                if not e.isSet(): When alreadly stopped do not add current emotions
+                if not e.isSet(): #When alreadly stopped do not add current emotions
                     emotions.append(data['right_emotion'][0])#it will get big at a certain point
                     s.emit('emotion', { 'rigid': vera_rig_id, 'type': vera_type, 'callid': callid, 'callagentid': callagentid, 'emotions': data['right_emotion'][0] })
             
