@@ -3,6 +3,7 @@ import threading;
 import logging;
 import random;
 import MicroPhoneRecorder
+import datetime
 
 from requests.exceptions import ConnectionError;
 from socketIO_client_nexus import SocketIO, BaseNamespace;
@@ -15,11 +16,11 @@ logging.basicConfig();
 vera_hub_address = urlparse(os.getenv('VERA_HUB_URI', 'http://localhost:3005'));
 vera_rig_id = os.getenv('VERA_RIG_ID', 'TESTSPACE');
 vera_type = 'vera-preprocessor';
-vera_emotion_processor_address = urlparse(os.getenv('VERA_EMOTION_PROCESSOR_ADDRESS', 'http://localhost:45000/annotate'));
+vera_emotion_processor_address = urlparse(os.getenv('VERA_EMOTION_PROCESSOR_ADDRESS', 'http://vera.northeurope.cloudapp.azure.com:50001/annotate'));
 
 #vera_emotion_processor_address = urlparse(os.getenv('VERA_EMOTION_PROCESSOR_ADDRESS', 'http://vera.northeurope.cloudapp.azure.com:50001/annotate'));
 vera_mongo_db = urlparse(os.getenv("VERA_FEATURES_DB", "mongodb://127.0.0.1:27017/VERAPreProcessor"))
-
+print(vera_mongo_db.geturl())
 """ global variables """
 vera_namespace = None;
 event = None;
@@ -34,19 +35,15 @@ except:
     print("WARNING: Mongo DB not set up")
     pass
 
-
-
 def get_emotions():
     global mt
     data = mt.pop_emotions()
     return data;
 
-
 def vera_preprocess(e, s, d):
     """ Replace this code with VERA pre-processor code for audio processing """
     while True:
         if not e.isSet():
-            e.wait(1); # 3 seconds of audio processing and 1 second for analyzing
             logging.info('processing...');
             data = get_emotions();
             #print("processing")
@@ -54,19 +51,20 @@ def vera_preprocess(e, s, d):
                 global emotions
                 callid= d.get("callid") # we should get all the relevant information here.
                 callagentid = d.get("callagentid")
-                data["callid"] = callid
-                data["callagentid"] = callagentid
-                mt.save_in_mongo_db(callid,callagentid,data)
-                print("===START READING===")
+                #data["callid"] = callid
+                #data["callagentid"] = callagentid
+                #data["rigid"] = vera_rig_id
+                mt.save_in_mongo_db({ 'rigid': vera_rig_id, 'type': vera_type, 'callid': callid, 'callagentid': callagentid, 'data': data })
+                #print("===START READING===")
                 #print(data)
-                print("Right Channel")
-                print(data['right_emotion'])
-                print("Left Channel")
-                print(data['left_emotion'])
-                print("===END READING===")
-
-                emotions.append(data['right_emotion'])#it will get big at a certain point
-                #s.emit('emotion', data['right_emotion'])
+                #print("Right Channel")
+                #print(data['right_emotion'][0])
+                #print("Left Channel")
+                #print(data['left_emotion'][0])
+                #print("===END READING===")
+                if not e.isSet(): When alreadly stopped do not add current emotions
+                    emotions.append(data['right_emotion'][0])#it will get big at a certain point
+                    s.emit('emotion', { 'rigid': vera_rig_id, 'type': vera_type, 'callid': callid, 'callagentid': callagentid, 'emotions': data['right_emotion'][0] })
             
 
 

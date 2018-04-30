@@ -30,6 +30,7 @@ class MicroPhoneRecorder:
         ''' MongoDB must be up... the assumption is that the client is local '''
         self.client = None
         self.db = None
+        self.features = None
         self.myqueue= deque([])
         self.Input = Input
         self.Device = Device
@@ -55,6 +56,7 @@ class MicroPhoneRecorder:
     def set_mongo_db(self,URL="mongodb://127.0.0.1:27017/VERAPreProcessor"):
         self.client = MongoClient(URL)
         self.db = self.client.VERAPreProcessor
+        self.features = self.db.features
 
     def is_silent(self,snd_data):
         "Returns 'True' if below the 'silent' threshold"
@@ -262,25 +264,9 @@ class MicroPhoneRecorder:
             self.q.task_done()
 
 
-    def save_in_mongo_db(self,callagentid, callid, DataToSave):
+    def save_in_mongo_db(self, data):
         try:
-            features = self.db.features
-
-            featureDataItem = {
-
-                "callagentid": callagentid,
-
-                "callid": callid,
-
-                "calldatetime": datetime.datetime.now(),
-
-                "createdAt": datetime.datetime.utcnow(),
-
-                "data": DataToSave  # replace string with features object
-
-            }
-
-            features.insert(featureDataItem)
+            self.features.insert(data)
         except:
             print("NOT SAVED, EXCEPTION DURING SAVING in MONGODB")
             pass
