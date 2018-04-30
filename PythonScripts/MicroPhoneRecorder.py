@@ -266,6 +266,8 @@ class MicroPhoneRecorder:
 
     def save_in_mongo_db(self, data):
         try:
+            data["createdAt"] = datetime.datetime.now()
+            data["calldatetime"] = datetime.datetime.now()
             self.features.insert(data)
         except:
             print("NOT SAVED, EXCEPTION DURING SAVING in MONGODB")
