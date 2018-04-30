@@ -17,10 +17,8 @@ vera_hub_address = urlparse(os.getenv('VERA_HUB_URI', 'http://localhost:3005'));
 vera_rig_id = os.getenv('VERA_RIG_ID', 'TESTSPACE');
 vera_type = 'vera-preprocessor';
 vera_emotion_processor_address = urlparse(os.getenv('VERA_EMOTION_PROCESSOR_ADDRESS', 'http://vera.northeurope.cloudapp.azure.com:50001/annotate'));
-
-#vera_emotion_processor_address = urlparse(os.getenv('VERA_EMOTION_PROCESSOR_ADDRESS', 'http://vera.northeurope.cloudapp.azure.com:50001/annotate'));
 vera_mongo_db = urlparse(os.getenv("VERA_FEATURES_DB", "mongodb://127.0.0.1:27017/VERAPreProcessor"))
-print(vera_mongo_db.geturl())
+
 """ global variables """
 vera_namespace = None;
 event = None;
