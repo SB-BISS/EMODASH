@@ -326,7 +326,7 @@ class MicroPhoneRecorder:
         response_R = requests.post(self.URL, headers=headers, data=var_res_R)
         print("--- %s seconds ---" % (time.time() - start_time))
 
-        self.myqueue.append({"left_emotion": response_L.json(), "right_emotion": response_R.json(),
+        self.myqueue.append({"duration": (time.time() - start_time), "left_emotion": response_L.json(), "right_emotion": response_R.json(),
                              "left_features": var_res_L, "right_features": var_res_R})  # double pop?
 
         # clean up
