@@ -352,6 +352,9 @@ class MicroPhoneRecorder:
         else:
             return None
 
+    def clear_emotions(self):
+        self.myqueue.clear()
+
     def start_recording(self):
         self.t = threading.Thread(target=self.record_to_file)
         self.t.daemon = True
