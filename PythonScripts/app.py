@@ -22,7 +22,6 @@ vera_mongo_db = urlparse(os.getenv("VERA_FEATURES_DB", "mongodb://127.0.0.1:2701
 """ global variables """
 vera_namespace = None
 event = None
-emotions = []
 """ microphone """
 mt = MicroPhoneRecorder.MicroPhoneRecorder(RATE= 8000, Device=1, WAVE_OUTPUT_FILENAME="output", EXPORT_FOLDER="Agent", BASELINE= './mean_std.csv', URL=vera_emotion_processor_address.geturl())
 """ set mongo db"""
@@ -51,7 +50,6 @@ def vera_preprocess(e, s, d):
                 callagentid = d.get("callagentid")
                 if not e.isSet(): #When alreadly stopped do not add current emotions
                     s.emit('emotion', { 'rigid': vera_rig_id, 'type': vera_type, 'callid': callid, 'callagentid': callagentid, 'duration': data['duration'], 'emotions': data['right_emotion'][0] })
-                    emotions.append(data['right_emotion'][0])#it will get big at a certain point
                 mt.save_in_mongo_db({ 'rigid': vera_rig_id, 'type': vera_type, 'callid': callid, 'callagentid': callagentid, 'data': data })
             else:
                 data = None
@@ -60,7 +58,7 @@ def vera_preprocess(e, s, d):
 
 class Namespace(BaseNamespace):
     """ The binding to 'connected' event is done automatically by namespace based on name """
-    def on_connected(self, data):
+    def on_connected(data):
         vera_namespace.emit("join-space", { 'rigid': vera_rig_id, 'type': vera_type })
 
 
@@ -94,11 +92,7 @@ def on_vera_stop(data):
     """ Signal other modules in space that processing has been stopped """
     global vera_namespace
     data['type'] = vera_type
-    global emotions
-    data.update({ 'emotions': emotions })
     vera_namespace.emit("vera-stopped", data)
-    del emotions[:]
-
 
 try:
     socketIO  = SocketIO(vera_hub_address.hostname, vera_hub_address.port, Namespace)
