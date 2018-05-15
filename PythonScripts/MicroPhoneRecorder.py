@@ -305,6 +305,8 @@ class MicroPhoneRecorder:
         song_R = AudioSegment.from_wav(
             EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_R.wav")
         '''
+
+        feature_start_time = time.time()
         song_L = AudioSegment.from_file(StringIO(data_L),format="raw", channels=1,sample_width=sample_width,frame_rate=self.RATE)
         song_R = AudioSegment.from_file(StringIO(data_R),format="raw",channels=1,sample_width=sample_width,frame_rate=self.RATE)
 
@@ -326,7 +328,7 @@ class MicroPhoneRecorder:
         response_R = requests.post(self.URL, headers=headers, data=var_res_R)
         print("--- %s seconds ---" % (time.time() - start_time))
 
-        self.myqueue.append({"duration": (time.time() - start_time), "left_emotion": response_L.json(), "right_emotion": response_R.json(),
+        self.myqueue.append({"fduration": (time.time() - feature_start_time), "duration": (time.time() - start_time), "left_emotion": response_L.json(), "right_emotion": response_R.json(),
                              "left_features": var_res_L, "right_features": var_res_R})  # double pop?
 
         # clean up
