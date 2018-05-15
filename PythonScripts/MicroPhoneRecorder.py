@@ -268,7 +268,7 @@ class MicroPhoneRecorder:
         try:
             data["createdAt"] = datetime.datetime.now()
             data["calldatetime"] = datetime.datetime.now()
-            self.features.insert(data)
+            self.features.insert(data, w=0)
         except:
             print("NOT SAVED, EXCEPTION DURING SAVING in MONGODB")
             pass
