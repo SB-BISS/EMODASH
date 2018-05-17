@@ -62,7 +62,7 @@ def vera_preprocess(e, s, d):
                 #print("===END READING===")
                 if not e.isSet(): #When alreadly stopped do not add current emotions
                     emotions.append(data['right_emotion'][0])#it will get big at a certain point
-                    s.emit('emotion', { 'rigid': vera_rig_id, 'type': vera_type, 'callid': callid, 'callagentid': callagentid, 'emotions': data['right_emotion'][0] })
+                    s.emit('emotion', { 'rigid': vera_rig_id, 'type': vera_type, 'callid': callid, 'callagentid': callagentid, 'duration': data['duration'], 'emotions': data['right_emotion'][0] })
             
 
 
@@ -113,6 +113,7 @@ try:
     vera_namespace = socketIO.define(Namespace, '/VERA')
     vera_namespace.on('vera-start', on_vera_start);
     vera_namespace.on('vera-stop', on_vera_stop);
+    print('Connected to VERA Hub.')
     socketIO.wait();
 except ConnectionError:
     print('The server is down. Try again later.')
