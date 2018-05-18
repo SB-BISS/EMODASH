@@ -22,17 +22,11 @@ from sklearn.externals import joblib
 from scipy.stats import kurtosis
 from scipy.stats import skew
 
-from pyAudioAnalysis import audioBasicIO
-from pyAudioAnalysis import audioFeatureExtraction
-import os
-import re
-import matplotlib.pyplot as plt
-from sklearn.externals import joblib
 import array
 from pydub import AudioSegment
 from pydub.utils import get_array_type
 import pandas as pd
-from matplotlib import pyplot as plt
+# from matplotlib import pyplot as plt
 import pickle
 
 class FeatureExtractor:

@@ -9,6 +9,8 @@ from requests.exceptions import ConnectionError
 from socketIO_client_nexus import SocketIO, BaseNamespace
 from urlparse import urlparse
 
+from pymongo import MongoClient
+
 logging.getLogger('socketIO-client-nexus').setLevel(logging.ERROR)
 logging.getLogger('root').setLevel(logging.INFO)
 logging.basicConfig()
@@ -19,81 +21,81 @@ vera_type = 'vera-preprocessor'
 vera_emotion_processor_address = urlparse(os.getenv('VERA_EMOTION_PROCESSOR_ADDRESS', 'http://vera.northeurope.cloudapp.azure.com:50001/annotate'))
 vera_mongo_db = urlparse(os.getenv("VERA_FEATURES_DB", "mongodb://127.0.0.1:27017/VERAPreProcessor"))
 
+
 """ global variables """
+mongo_features_collection = None
+callinfo = { 'callid': None, 'callagentid': None }
 vera_namespace = None
-event = None
-""" microphone """
-mt = MicroPhoneRecorder.MicroPhoneRecorder(RATE= 8000, Device=1, WAVE_OUTPUT_FILENAME="output", EXPORT_FOLDER="Agent", BASELINE= './mean_std.csv', URL=vera_emotion_processor_address.geturl())
-""" set mongo db"""
+microphone = MicroPhoneRecorder.MicroPhoneRecorder(RATE= 8000, Device=1, WAVE_OUTPUT_FILENAME="output", EXPORT_FOLDER="Agent", BASELINE= './mean_std.csv', URL=vera_emotion_processor_address.geturl())
 
-try:
-    mt.set_mongo_db(URL = vera_mongo_db.geturl())
-except:
-    print("WARNING: Mongo DB not set up")
-    pass
+""" Set eventhandler for MicroPhoneRecorder events """
 
-def get_emotions():
-    global mt
-    data = mt.pop_emotions()
-    return data
+def onEmotionsChanged(self, data):
+    global callinfo
+    vera_namespace.emit('emotion', { 'rigid': vera_rig_id, 'type': vera_type, 'callid': callinfo['callid'], 'callagentid': callinfo['callagentid'], 'duration': data['duration'], 'emotions': data['right_emotion'][0] })
+    save_in_mongo_db(self, { 'rigid': vera_rig_id, 'type': vera_type, 'callid': callinfo['callid'], 'callagentid': callinfo['callagentid'], 'data': data })
 
-def vera_preprocess(e, s, d):
-    """ Replace this code with VERA pre-processor code for audio processing """
-    while True:
-        if not e.isSet():
-            logging.info('processing...')
-            data = get_emotions()
-            #print("processing")
-            if data!=None:
-                global emotions
-                callid= d.get("callid") # we should get all the relevant information here.
-                callagentid = d.get("callagentid")
-                if not e.isSet(): #When alreadly stopped do not add current emotions
-                    s.emit('emotion', { 'rigid': vera_rig_id, 'type': vera_type, 'callid': callid, 'callagentid': callagentid, 'duration': data['duration'], 'emotions': data['right_emotion'][0] })
-                mt.save_in_mongo_db({ 'rigid': vera_rig_id, 'type': vera_type, 'callid': callid, 'callagentid': callagentid, 'data': data })
-            else:
-                data = None
-                mt.clear_emotions() #clear emotions already on queue, we don't need them anymore.
+microphone.on('emotionsChanged', onEmotionsChanged)
 
 
-class Namespace(BaseNamespace):
-    """ The binding to 'connected' event is done automatically by namespace based on name """
-    def on_connected(data):
-        vera_namespace.emit("join-space", { 'rigid': vera_rig_id, 'type': vera_type })
-
-
-""" Events for which there is no automatic binding in the namespace. """
+""" Event handlers for hub events. """
 
 def on_vera_start(data):
     """ Start second thread with the VERA audio processing """
     print(data)
-    global event
-    global vera_namespace
-    global mt
-    
-    mt.start_recording()
-    
-    event = threading.Event()
-    thread = threading.Thread(name='preprocessor', target=vera_preprocess, args=(event, vera_namespace,data))
-    thread.start()
+    global callinfo 
+    callinfo['callid'] = data['callid']
+    callinfo['callagentid'] = data['callagentid']
 
+    global microphone
+    microphone.clear_emotions() #clear queue from left over emotions
+    microphone.start_recording()
+    
     """ Signal other modules in space that processing has been started """
     data['type'] = vera_type
+    global vera_namespace
     vera_namespace.emit("vera-started", data)
 
-
 def on_vera_stop(data):
-    """ Signal 2nd thread to stop processing by setting the threading event. This will exit the thread. """
-    global event
-    global mt
-    event.set()
-    mt.stop_recording()
+    global microphone
+    microphone.stop_recording()
     print("stopped")
+
     """ Signal other modules in space that processing has been stopped """
     global vera_namespace
     data['type'] = vera_type
     vera_namespace.emit("vera-stopped", data)
 
+    global callinfo
+    callinfo['callid'] = None
+    callinfo['callagentid'] = None
+
+class Namespace(BaseNamespace):
+    """ The binding to 'connected' event is done automatically by namespace based on name """
+    def on_connected(self):
+        vera_namespace.emit("join-space", { 'rigid': vera_rig_id, 'type': vera_type })
+
+
+""" Setup MongoDB """
+def save_in_mongo_db(self, data):
+    global mongo_features_collection
+    if mongo_features_collection is None:
+        try:
+            mongo_features_collection = MongoClient(vera_mongo_db.geturl()).VERAPreProcessor.features
+        except:
+            print("WARNING: Mongo DB not set up")
+            pass
+
+    if (not mongo_features_collection is None):
+        try:
+            data['createdAt'] = datetime.datetime.now()
+            data['calldatetime'] = datetime.datetime.now()
+            mongo_features_collection.insert(data, w=0)
+        except:
+            print("NOT SAVED, EXCEPTION DURING SAVING in MONGODB")
+            pass
+
+""" Setup Socket.io client and start listening for events """
 try:
     socketIO  = SocketIO(vera_hub_address.hostname, vera_hub_address.port, Namespace)
     vera_namespace = socketIO.define(Namespace, '/VERA')
@@ -103,8 +105,3 @@ try:
     socketIO.wait()
 except ConnectionError:
     print('The server is down. Try again later.')
-
-
-
-
-

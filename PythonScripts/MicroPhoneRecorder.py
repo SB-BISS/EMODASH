@@ -15,22 +15,17 @@ import datetime
 import numpy as np
 import pandas as pd
 import pyaudio
-import threading;
+import threading
 import requests
 from pydub import AudioSegment
 from pymongo import MongoClient
 
 import FeatureExtractor
+from ObjectWithEvents import ObjectWithEvents
 
-
-class MicroPhoneRecorder:
-
+class MicroPhoneRecorder(ObjectWithEvents):
 
     def __init__(self,Device = 1, Input = True, Channels = 2,  THRESHOLD = 500, CHUNK_SIZE = 1024, FORMAT = pyaudio.paInt16, RATE = 8000, RECORD_SECONDS = 3.25,WAVE_OUTPUT_FILENAME_EXTENSION = 0, EXPORT_FOLDER= "Recordings", WAVE_OUTPUT_FILENAME = "output", BASELINE = 'baseline_mean_sd.pickle', URL= "http://localhost:50000/annotate"):
-        ''' MongoDB must be up... the assumption is that the client is local '''
-        self.client = None
-        self.db = None
-        self.features = None
         self.myqueue= deque([])
         self.Input = Input
         self.Device = Device
@@ -53,15 +48,9 @@ class MicroPhoneRecorder:
         self.lock = threading.Lock()
         self.fe = FeatureExtractor.FeatureExtractor(BASELINE)
 
-    def set_mongo_db(self,URL="mongodb://127.0.0.1:27017/VERAPreProcessor"):
-        self.client = MongoClient(URL)
-        self.db = self.client.VERAPreProcessor
-        self.features = self.db.features
-
     def is_silent(self,snd_data):
         "Returns 'True' if below the 'silent' threshold"
         return max(snd_data) < self.THRESHOLD
-
 
     def normalize(self,snd_data):
         "Average the volume out"
@@ -72,7 +61,6 @@ class MicroPhoneRecorder:
         for i in snd_data:
             r.append(int(i * times))
         return r
-
 
     def trim(self,snd_data):
         "Trim the blank spots at the start and end"
@@ -118,7 +106,7 @@ class MicroPhoneRecorder:
         """
         p = pyaudio.PyAudio()
         if self.Input==True:
-           stream = p.open(format=self.FORMAT, channels=self.Channels, input_device_index=self.Device , rate=self.RATE, input=True, frames_per_buffer=self.CHUNK_SIZE)
+            stream = p.open(format=self.FORMAT, channels=self.Channels, input_device_index=self.Device , rate=self.RATE, input=True, frames_per_buffer=self.CHUNK_SIZE)
         else:
             stream = p.open(format=self.FORMAT, channels=self.Channels, output_device_index=self.Device, rate=self.RATE,
                             input=False, output=True, frames_per_buffer=self.CHUNK_SIZE)
@@ -160,7 +148,7 @@ class MicroPhoneRecorder:
 
             d = True
             print("starting")
-            ts = time.time()
+
             EXPORT_FOLDER = self.EXPORT_FOLDER + "_RECORDINGS" #+ str(ts).split(".")[0]
             if not os.path.exists(EXPORT_FOLDER):
                 os.makedirs(EXPORT_FOLDER)
@@ -174,13 +162,11 @@ class MicroPhoneRecorder:
             fifth_recording = None
             while d:
                 
-                
                 self.q.join()
                 
                 try:
                     
                     sample_width, data = self.record()
-
 
                     # if there was no recording done so far
                     # store the first 3 seconds in the first recording
@@ -190,18 +176,18 @@ class MicroPhoneRecorder:
                     # store the next recording in the second recording
                     elif second_recording == None:
                         second_recording = data
-
+                    # if there were only two recording done so far
+                    # store the next recording in the third recording
                     elif third_recording == None:
                         third_recording = data
-
-
+                    # if there were only three recording done so far
+                    # store the next recording in the fourth recording
                     elif fourth_recording == None:
                         fourth_recording = data
 
-                    # for every recording coming after the first 2 times 3 seconds
-                    # store the recording in the third recording
+                    # for every recording coming after the first 4 times 3 seconds
+                    # store the recording in the fifth recording
                     else:
-
 
                         fifth_recording = data
 
@@ -215,23 +201,7 @@ class MicroPhoneRecorder:
                                                   args=(data,sample_width));
                         thread.start();
 
-                        #self.process_data(data,sample_width)
-                        #os.remove(EXPORT_FOLDER)
-
-                        #                 result["filename"] = i
-
-                        # dict_to_append = result.to_dict('record')
-
-                        # to_json.append(dict_to_append[0])
-                        # print result.to_dict('list')
-                        #sys.stdout.write("\r" + str(response.to_dict('record')[0]))
-                        #sys.stdout.flush()
-                        # print result_all.to_json()
-
-                        # increase the name counter of the filename
-                        #self.WAVE_OUTPUT_FILENAME_EXTENSION += 1
-
-                        # shift the recordings and delete the last recording
+                        # shift the recordings and free the last fifth recording
                         # shift the second recording to be the first now
                         first_recording = None
                         first_recording = second_recording
@@ -251,7 +221,6 @@ class MicroPhoneRecorder:
                     traceback.print_exc()
                     print("Exception in Processing Audio. Continuing..." + str(e))
                     pass
-                # d = False
 
                 # Exit the loop with enter
                 try:
@@ -264,49 +233,17 @@ class MicroPhoneRecorder:
             self.q.task_done()
 
 
-    def save_in_mongo_db(self, data):
-        try:
-            data["createdAt"] = datetime.datetime.now()
-            data["calldatetime"] = datetime.datetime.now()
-            self.features.insert(data, w=0)
-        except:
-            print("NOT SAVED, EXCEPTION DURING SAVING in MONGODB")
-            pass
-
-
     def process_data(self,data,sample_width):
+
+        splitchannel_start_time = time.time()
+
         data = pack('<' + ('h' * len(data)), *data)
         data_L, data_R = self.mul_stereo(data, sample_width)
 
-        '''wf = wave.open(
-            EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_L.wav",
-            'wb')
-        wf.setnchannels(1)
-        wf.setsampwidth(sample_width)
-        wf.setframerate(self.RATE)
-        wf.writeframes(data_L)
-        wf.close()
-
-        wf = wave.open(
-            EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_R.wav",
-            'wb')
-        wf.setnchannels(1)
-        wf.setsampwidth(sample_width)
-        wf.setframerate(self.RATE)
-        wf.writeframes(data_R)
-        wf.close()
-
-        # print("reached 3")
-
-        #
-        song_L = AudioSegment.from_wav(
-            EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_L.wav")
-
-        song_R = AudioSegment.from_wav(
-            EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_R.wav")
-        '''
+        splitchannel_duration = time.time() - splitchannel_start_time
 
         feature_start_time = time.time()
+
         song_L = AudioSegment.from_file(StringIO(data_L),format="raw", channels=1,sample_width=sample_width,frame_rate=self.RATE)
         song_R = AudioSegment.from_file(StringIO(data_R),format="raw",channels=1,sample_width=sample_width,frame_rate=self.RATE)
 
@@ -315,46 +252,37 @@ class MicroPhoneRecorder:
         result_L = self.fe.split_song(song_L)  # just get the features out.
         result_R = self.fe.split_song(song_R)  # just get the features out.
 
+        feature_duration = time.time() - feature_start_time
+
+        analysis_start_time = time.time()
+
         headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
 
         var_res_L = pd.Series(result_L).to_json(orient='values')
         var_res_R = pd.Series(result_R).to_json(orient='values')
 
-        # with open("my_test.csv", "a+") as myfile:
-        #    myfile.writelines([var_res])
-        # myfile.close()
         start_time = time.time()
         response_L = requests.post(self.URL, headers=headers, data=var_res_L)
         response_R = requests.post(self.URL, headers=headers, data=var_res_R)
         print("--- %s seconds ---" % (time.time() - start_time))
 
-        self.myqueue.append({"fduration": (time.time() - feature_start_time), "duration": (time.time() - start_time), "left_emotion": response_L.json(), "right_emotion": response_R.json(),
-                             "left_features": var_res_L, "right_features": var_res_R})  # double pop?
+        analysis_duration = time.time() - analysis_start_time
 
-        # clean up
-        '''os.remove(EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(
-            self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_L.wav")
+        duration = {"split": splitchannel_duration, "features": feature_duration, "analysis": analysis_duration}
 
-        os.remove(EXPORT_FOLDER + "/" + self.WAVE_OUTPUT_FILENAME + "_" + str(
-            self.WAVE_OUTPUT_FILENAME_EXTENSION) + "_R.wav")
-        '''
+        payload = {"duration": duration, "left_emotion": response_L.json(), "right_emotion": response_R.json(),
+                             "left_features": var_res_L, "right_features": var_res_R}
 
+        # trigger event 
+        super(MicroPhoneRecorder, self).trigger('emotionsChanged', payload)
 
     def mul_stereo(self, sample, width):
         lsample = audioop.tomono(sample, width, 1, 0)
         rsample = audioop.tomono(sample, width, 0, 1)
         return lsample, rsample
 
-
-
-    #if __name__ == '__main__':
-    def pop_emotions(self):
-        if len(self.myqueue)>0:
-            return self.myqueue.popleft() #it is saved as an array with inside a dictionary
-        else:
-            return None
-
     def clear_emotions(self):
+        print("clear queue with emotions")
         self.myqueue.clear()
 
     def start_recording(self):
@@ -366,4 +294,5 @@ class MicroPhoneRecorder:
         self.q.put(1)
         self.q.join()
         #self.t.stop()
+
 
