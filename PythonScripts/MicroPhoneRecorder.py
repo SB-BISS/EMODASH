@@ -46,6 +46,7 @@ class MicroPhoneRecorder(ObjectWithEvents):
         self.WAVE_OUTPUT_FILENAME = WAVE_OUTPUT_FILENAME
         self.q = Queue()
         self.lock = threading.Lock()
+        self.stopRecordingEvent = None
         self.fe = FeatureExtractor.FeatureExtractor(BASELINE)
 
     def is_silent(self,snd_data):
@@ -146,91 +147,34 @@ class MicroPhoneRecorder(ObjectWithEvents):
     def record_to_file(self):
         with self.lock:
 
-            d = True
             print("starting")
 
-            EXPORT_FOLDER = self.EXPORT_FOLDER + "_RECORDINGS" #+ str(ts).split(".")[0]
-            if not os.path.exists(EXPORT_FOLDER):
-                os.makedirs(EXPORT_FOLDER)
+            numInitIntervals = 5 # model needs a recording of 5 sound samples of 3 seconds
+            recording = np.array([], 'h')
 
-            # the sound of each 3 seconds intervall
-            # they get combined later to a 9 seconds total interval
-            first_recording = None
-            second_recording = None
-            third_recording = None
-            fourth_recording = None
-            fifth_recording = None
-            while d:
-                
-                self.q.join()
-                
+            while not self.stopRecordingEvent.isSet(): # while we are recoding the call
+
                 try:
-                    
+                    # record sound sample of 3 seconds
                     sample_width, data = self.record()
 
-                    # if there was no recording done so far
-                    # store the first 3 seconds in the first recording
-                    if first_recording == None:
-                        first_recording = data
-                    # if there was only one recording done so far
-                    # store the next recording in the second recording
-                    elif second_recording == None:
-                        second_recording = data
-                    # if there were only two recording done so far
-                    # store the next recording in the third recording
-                    elif third_recording == None:
-                        third_recording = data
-                    # if there were only three recording done so far
-                    # store the next recording in the fourth recording
-                    elif fourth_recording == None:
-                        fourth_recording = data
+                    # add new 3 second sample to back of recording
+                    recording = np.append(recording, data) 
+                  
+                    dataLength = len(data)
 
-                    # for every recording coming after the first 4 times 3 seconds
-                    # store the recording in the fifth recording
-                    else:
-
-                        fifth_recording = data
-
-                        data = first_recording
-                        data = np.append(data, second_recording)
-                        data = np.append(data, third_recording)
-                        data = np.append(data, fourth_recording)
-                        data = np.append(data, fifth_recording)
-
-                        thread = threading.Thread(name='preprocessor', target=self.process_data,
-                                                  args=(data,sample_width));
-                        thread.start();
-
-                        # shift the recordings and free the last fifth recording
-                        # shift the second recording to be the first now
-                        first_recording = None
-                        first_recording = second_recording
-                        # shift the third recording to be the second now
-                        second_recording = None
-                        second_recording = third_recording
-                        # empty the third recording so a new recording can be made
-                        third_recording = None
-                        third_recording = fourth_recording
-
-                        fourth_recording = None
-                        fourth_recording = fifth_recording
-
-                        fifth_recording=None
+                    if (len(recording) == numInitIntervals * dataLength):
+                        # start new thread to process the latest 5 x 3 seconds recording
+                        threading.Thread(name='preprocessor', target=self.process_data, args=(recording, sample_width)).start()
+                        # slice oldest 3 seconds sample from front of recording
+                        recording = recording[dataLength:]
 
                 except Exception, e:
                     traceback.print_exc()
                     print("Exception in Processing Audio. Continuing..." + str(e))
                     pass
 
-                # Exit the loop with enter
-                try:
-                    if self.q.get(timeout=0) == 1:
-                        d = False
-                except:
-                    pass
-
-            print('Task Completing')
-            self.q.task_done()
+            print('Recording stopped')
 
 
     def process_data(self,data,sample_width):
@@ -244,8 +188,8 @@ class MicroPhoneRecorder(ObjectWithEvents):
 
         feature_start_time = time.time()
 
-        song_L = AudioSegment.from_file(StringIO(data_L),format="raw", channels=1,sample_width=sample_width,frame_rate=self.RATE)
-        song_R = AudioSegment.from_file(StringIO(data_R),format="raw",channels=1,sample_width=sample_width,frame_rate=self.RATE)
+        song_L = AudioSegment.from_file(StringIO(data_L), format="raw", channels=1, sample_width=sample_width, frame_rate=self.RATE)
+        song_R = AudioSegment.from_file(StringIO(data_R), format="raw", channels=1, sample_width=sample_width, frame_rate=self.RATE)
 
         # This has to be transformed here.
 
@@ -264,35 +208,32 @@ class MicroPhoneRecorder(ObjectWithEvents):
         start_time = time.time()
         response_L = requests.post(self.URL, headers=headers, data=var_res_L)
         response_R = requests.post(self.URL, headers=headers, data=var_res_R)
-        print("--- %s seconds ---" % (time.time() - start_time))
 
-        analysis_duration = time.time() - analysis_start_time
+        if not self.stopRecordingEvent.isSet():
+            print("--- %s seconds ---" % (time.time() - start_time))
 
-        duration = {"split": splitchannel_duration, "features": feature_duration, "analysis": analysis_duration}
+            analysis_duration = time.time() - analysis_start_time
 
-        payload = {"duration": duration, "left_emotion": response_L.json(), "right_emotion": response_R.json(),
-                             "left_features": var_res_L, "right_features": var_res_R}
+            duration = {"split": splitchannel_duration, "features": feature_duration, "analysis": analysis_duration}
 
-        # trigger event 
-        super(MicroPhoneRecorder, self).trigger('emotionsChanged', payload)
+            payload = {"duration": duration, "left_emotion": response_L.json(), "right_emotion": response_R.json(),
+                                "left_features": var_res_L, "right_features": var_res_R}
+
+            # trigger event 
+            super(MicroPhoneRecorder, self).trigger('emotionsChanged', payload)
 
     def mul_stereo(self, sample, width):
         lsample = audioop.tomono(sample, width, 1, 0)
         rsample = audioop.tomono(sample, width, 0, 1)
         return lsample, rsample
 
-    def clear_emotions(self):
-        print("clear queue with emotions")
-        self.myqueue.clear()
-
     def start_recording(self):
+        self.stopRecordingEvent = threading.Event()
         self.t = threading.Thread(target=self.record_to_file)
         self.t.daemon = True
         self.t.start()
 
     def stop_recording(self):
-        self.q.put(1)
-        self.q.join()
-        #self.t.stop()
+        self.stopRecordingEvent.set()
 
 

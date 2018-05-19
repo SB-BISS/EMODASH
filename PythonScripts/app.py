@@ -48,7 +48,6 @@ def on_vera_start(data):
     callinfo['callagentid'] = data['callagentid']
 
     global microphone
-    microphone.clear_emotions() #clear queue from left over emotions
     microphone.start_recording()
     
     """ Signal other modules in space that processing has been started """
