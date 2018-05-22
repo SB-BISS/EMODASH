@@ -96,7 +96,7 @@ def save_in_mongo_db(self, data):
 
 """ Setup Socket.io client and start listening for events """
 try:
-    socketIO  = SocketIO(vera_hub_address.hostname, vera_hub_address.port, Namespace)
+    socketIO  = SocketIO(host=vera_hub_address.hostname, port=vera_hub_address.port, Namespace=Namespace, wait_for_connection=True)
     vera_namespace = socketIO.define(Namespace, '/VERA')
     vera_namespace.on('vera-start', on_vera_start)
     vera_namespace.on('vera-stop', on_vera_stop)
