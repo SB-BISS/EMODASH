@@ -1,3 +1,4 @@
 *.class
 *.wav
 *.pyc
+error.json
