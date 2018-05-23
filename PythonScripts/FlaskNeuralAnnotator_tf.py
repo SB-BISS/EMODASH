@@ -26,6 +26,11 @@ def alive():
     print('Hello world!')
     return "ALIVE"
 
+""" endpoint for target verification Loader.io """
+@app.route('/loaderio-a6ded7959b23d830b6eb8fa820cb31fc', methods=['GET'])
+def loaderio():
+    return 'loaderio-a6ded7959b23d830b6eb8fa820cb31fc'
+
 
 @app.route('/annotate', methods=['POST'])
 def annotate():
@@ -49,7 +54,7 @@ def annotate2():
     if request.method == 'POST':
 
         mydata = request.data
-	Stringcodio = mydata.replace("[", "").replace("]","").split(",")
+        Stringcodio = mydata.replace("[", "").replace("]","").split(",")
         values = [float(val) for val in Stringcodio]
         valpred = np.reshape(np.array(values), (119,34))
         prediction = em.predict_emotion(valpred)
