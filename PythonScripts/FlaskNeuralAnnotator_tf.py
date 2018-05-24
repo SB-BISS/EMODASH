@@ -27,9 +27,9 @@ def alive():
     return "ALIVE"
 
 """ endpoint for target verification Loader.io """
-@app.route('/loaderio-a6ded7959b23d830b6eb8fa820cb31fc', methods=['GET'])
+@app.route('/loaderio-c2146f3353da3bd1786e4233a8de669a/', methods=['GET'])
 def loaderio():
-    return 'loaderio-a6ded7959b23d830b6eb8fa820cb31fc'
+    return 'loaderio-c2146f3353da3bd1786e4233a8de669a'
 
 
 @app.route('/annotate', methods=['POST'])

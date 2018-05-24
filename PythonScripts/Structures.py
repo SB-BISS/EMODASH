@@ -17,7 +17,7 @@ from keras.optimizers import *
 from keras.utils.np_utils import to_categorical
 from keras.layers.core import *
 from keras.layers import Input, Embedding, LSTM, Dense, merge, TimeDistributed
-import theano
+# import theano
 
 
 class Structures:
