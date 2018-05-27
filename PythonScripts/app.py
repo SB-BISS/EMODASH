@@ -100,7 +100,8 @@ try:
     vera_namespace = socketIO.define(Namespace, '/VERA')
     vera_namespace.on('vera-start', on_vera_start)
     vera_namespace.on('vera-stop', on_vera_stop)
-    print('Connected to VERA Hub.')
+    print('Connected to VERA Hub ' + vera_hub_address.geturl())
+    print('using analyzer on address ' + vera_emotion_processor_address.geturl())
     socketIO.wait()
 except ConnectionError:
     print('The server is down. Try again later.')
