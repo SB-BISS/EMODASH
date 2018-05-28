@@ -31,6 +31,10 @@ def alive():
 def loaderio():
     return 'loaderio-c2146f3353da3bd1786e4233a8de669a'
 
+@app.route('/loaderio-c59890271e009cafd5ad3fd5c5a3f542/', methods=['GET'])
+def loaderio2():
+    return 'loaderio-c59890271e009cafd5ad3fd5c5a3f542'
+
 
 @app.route('/annotate', methods=['POST'])
 def annotate():
